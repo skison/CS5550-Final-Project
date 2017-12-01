@@ -17,24 +17,24 @@ import edu.wmich.cs.samuel.kison.MessageQueue;
 public class GUIPanel
 {
 	private final JPanel gui = new JPanel(new BorderLayout(3, 3));
-	//private InputQueue playerInput; //important queue that button presses should add to!
-	//private final JLabel message = new JLabel("Battleship is ready to play!");
+	private GUIBoard board1, board2;
+	private GUIFrame frame; //parent Frame; used to send messages up to it
 	
-	//message queue to loop
-	private MessageQueue messageQueue;
+	//The 3 labels at the top of the GUI
+	private JLabel yourLabel;
+	private JLabel enemyLabel;
+	private JLabel notificationsLabel;
 
-	GUIBoard board1, board2;
-
-	GUIPanel(MessageQueue newQueue)
+	protected GUIPanel(GUIFrame newFrame)
 	{
-		messageQueue = newQueue;
+		frame = newFrame;
 		initializeGui();
 	}
 
-	public final void initializeGui()
+	protected final void initializeGui()
 	{
-		board1 = new GUIBoard(true, messageQueue);
-		board2 = new GUIBoard(false, messageQueue);
+		board1 = new GUIBoard(true, this);
+		board2 = new GUIBoard(false, this);
 
 		// set up the main GUI
 		gui.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -46,15 +46,15 @@ public class GUIPanel
 		Color yourColor = new Color(56, 201, 255);
 		Color enemyColor = new Color(255, 90, 68);
 		Color notifyColor = new Color(92, 249, 147);
-		JLabel yourLabel = new JLabel("Your Board", SwingConstants.CENTER);
+		yourLabel = new JLabel("Your Board", SwingConstants.CENTER);
 		yourLabel.setFont(new Font("SansSerif", Font.PLAIN, 20));
 		yourLabel.setOpaque(true);
 		yourLabel.setBackground(yourColor);
-		JLabel enemyLabel = new JLabel("Enemy's Board", SwingConstants.CENTER);
+		enemyLabel = new JLabel("Enemy's Board", SwingConstants.CENTER);
 		enemyLabel.setFont(new Font("SansSerif", Font.PLAIN, 20));
 		enemyLabel.setOpaque(true);
 		enemyLabel.setBackground(enemyColor);
-		JLabel notificationsLabel = new JLabel("Please start or join a game!", SwingConstants.CENTER);
+		notificationsLabel = new JLabel("Please input your player name!", SwingConstants.CENTER);
 		notificationsLabel.setFont(new Font("SansSerif", Font.PLAIN, 20));
 		notificationsLabel.setOpaque(true);
 		notificationsLabel.setBackground(notifyColor);
@@ -86,21 +86,61 @@ public class GUIPanel
 		gui.add(boardConstrain);
 
 	}
-
-	public JComponent getGui()
-	{
-		return gui;
-	}
 	
-	/*public void placeShip(String ship, int x, int y, String rotation)
+	//reset this panel and children
+	protected void reset()
 	{
-		board1.placeShip(ship, x, y, rotation);
-	}*/
+		notificationsLabel.setText("Please start or join a game!");
+		board1.reset();
+		board2.reset();
+	}
+
+	
+	
+	/*
+	 * Interpret message from parent GUI (should originate from Client)
+	 */
+	protected void updatePanel(String[] updateType)
+	{
+		//System.out.println("GuiPanel: got update message: " + updateType[0]);
+		if (updateType[0].equals("notify"))
+		{
+			notificationsLabel.setText(updateType[1]);
+		}
+		else if (updateType[0].equals("player_name"))
+		{
+			yourLabel.setText(updateType[1] + "'s Board");
+		}
+		else if (updateType[0].equals("enemy_name"))
+		{
+			enemyLabel.setText(updateType[1] + "'s Board");
+		}
+	}
 	
 	public GUIBoard getBoard(boolean player)
 	{
 		if(player) {return board1;}
 		else {return board2;}
+	}
+	
+	//Used to forward messages to the parent Frame from either of the GUIBoards
+	protected void receiveMessage(String[] message)
+	{
+		//System.out.println("sending message up to frame: " + message[0]);
+		switch (message[0])
+		{
+			case("button"):
+				frame.receiveMessage(message);
+				break;
+			default:
+				break;
+		}
+	}
+	
+	//Getter
+	protected JComponent getGui()
+	{
+		return gui;
 	}
 
 }

@@ -33,13 +33,11 @@ public class GUIBoard implements ActionListener
 	boolean player; //true = you, false = enemy
 	Color yourColor = new Color(56, 201, 255); //background colors
 	Color enemyColor = new Color(255, 90, 68);
-	//private InputQueue playerInput; //important queue that button presses should add to!
-	//message queue to loop
-	private MessageQueue messageQueue;
+	private GUIPanel panel; //parent Panel, used to send messages up a level
 
-	public GUIBoard(boolean _player, MessageQueue newQueue)
+	public GUIBoard(boolean _player, GUIPanel newPanel)
 	{
-		messageQueue = newQueue;
+		panel = newPanel;
 		player = _player;
 		
 		gameBoard = new JPanel(new GridLayout(0, 11)) {};
@@ -65,8 +63,8 @@ public class GUIBoard implements ActionListener
 				b.setRolloverIcon(defaultScaleIcon(ImageHolder.getHitMarker(false)));
 				
 				//keep track of x & y position
-				b.putClientProperty("x", ii);
-				b.putClientProperty("y", jj);
+				b.putClientProperty("x", jj);
+				b.putClientProperty("y", ii);
 				
 				//add action listener for this button
 				b.addActionListener(this);
@@ -100,6 +98,18 @@ public class GUIBoard implements ActionListener
 		}
 	}
 	
+	//Reset the icons on this board
+	public void reset()
+	{
+		for (int ii = 0; ii < gameBoardSquares.length; ii++)
+		{
+			for (int jj = 0; jj < gameBoardSquares[ii].length; jj++)
+			{
+				gameBoardSquares[ii][jj].setIcon(defaultScaleIcon(ImageHolder.getWaterTile()));
+			}
+		}
+	}
+	
 	//Take in a normal square image and return a 64*64 icon
 	public ImageIcon defaultScaleIcon(Image img)
 	{
@@ -108,18 +118,18 @@ public class GUIBoard implements ActionListener
 		return new ImageIcon(newImg);
 	}
 	
-	//rotation = direction the ship should face (up, down, left, right)
+	//rotation = direction the ship should face (Up, Down, Left, Right)
 	//code taken from https://stackoverflow.com/questions/9749121/java-image-rotation-with-affinetransform-outputs-black-image-but-works-well-whe
 	public BufferedImage rotateImage(BufferedImage inputImage, String rotation)
 	{
-		if(rotation == "right" || rotation == "left" || rotation == "down")
+		if(rotation == "Right" || rotation == "Left" || rotation == "Down")
 		{
 			AffineTransform tx = new AffineTransform();
 			tx.translate(inputImage.getHeight() / 2, inputImage.getWidth() / 2);
 			
-			if(rotation == "right") {tx.rotate(Math.PI / 2);}
-			else if(rotation == "down") {tx.rotate(Math.PI);}
-			else {tx.rotate((Math.PI / 2)*3);} //left
+			if(rotation == "Right") {tx.rotate(Math.PI / 2);}
+			else if(rotation == "Down") {tx.rotate(Math.PI);}
+			else {tx.rotate((Math.PI / 2)*3);} //Left
 			
 			// first - center image at the origin so rotate works OK
 			tx.translate(-inputImage.getWidth() / 2, -inputImage.getHeight() / 2);
@@ -158,6 +168,8 @@ public class GUIBoard implements ActionListener
 	 */
 	public void placeShip(String ship, int x, int y, String rotation)
 	{
+		//System.out.println(">>Call to placeShip(), rotation: " + rotation);
+		
 		BufferedImage[] shipParts = null; //start null
 		
 		switch(ship)
@@ -206,16 +218,16 @@ public class GUIBoard implements ActionListener
 			//increment or decrement x or y depending on the rotation
 			switch(rotation)
 			{
-				case("up"):
+				case("Up"):
 					y++;
 					break;
-				case("down"):
+				case("Down"):
 					y--;
 					break;
-				case("left"):
+				case("Left"):
 					x++;
 					break;
-				case("right"):
+				case("Right"):
 					x--;
 					break;
 				default:
@@ -230,8 +242,8 @@ public class GUIBoard implements ActionListener
 		JButton btn = (JButton) e.getSource();
 		int x = (int) btn.getClientProperty("x");
 		int y = (int) btn.getClientProperty("y");
-		
-		messageQueue.push(new String[]{"button", String.valueOf(player), Integer.toString(x), Integer.toString(y)});
+		//System.out.println("sending message up to panel");
+		panel.receiveMessage(new String[]{"button", String.valueOf(player), Integer.toString(x), Integer.toString(y)});
 	}
 
 }

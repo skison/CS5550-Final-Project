@@ -5,7 +5,7 @@ import edu.wmich.cs.samuel.kison.MessageQueue;
 public class ClientLoop implements Runnable
 {
 	private Client client; // reference to Client so messages can be instantly interpreted by it
-	private MessageQueue guiQueue; // message queue from gui
+	private MessageQueue clientInput; // message queue from client (forwarded from GUI)
 	private MessageQueue clientOutput; // message queue from here to server
 	private MessageQueue serverOutput; // message queue from server to here
 
@@ -15,7 +15,7 @@ public class ClientLoop implements Runnable
 	public ClientLoop(Client c, MessageQueue newQueue, MessageQueue _clientOutput, MessageQueue _serverOutput)
 	{
 		client = c;
-		guiQueue = newQueue;
+		clientInput = newQueue;
 		clientOutput = _clientOutput;
 		serverOutput = _serverOutput;
 	}
@@ -47,11 +47,11 @@ public class ClientLoop implements Runnable
 
 	private void checkInput()
 	{
-		if (!guiQueue.isEmpty())
+		if (!clientInput.isEmpty())
 		{
-			while (!guiQueue.isEmpty())
+			while (!clientInput.isEmpty())
 			{
-				interpretGUIMessage(guiQueue.pop());
+				interpretClientMessage(clientInput.pop());
 			}
 		}
 
@@ -64,65 +64,45 @@ public class ClientLoop implements Runnable
 		}
 	}
 
-	// When getting a new message from the GUI, interpret what to do here
-	private void interpretGUIMessage(String[] message)
+	// When getting a new message from the Client, interpret what to do here
+	private void interpretClientMessage(String[] message)
 	{
-		System.out.print("New Input from gui:");
-
+		System.out.print("ClientLoop: New Output from Client:");
 		for (int i = 0; i < message.length; i++)
 		{
 			System.out.print(" " + message[i]);
 		}
-
 		System.out.println(".");
-
-		/*if (message[0].equals("exit"))
-		{
-			return;// close this thread
-		}
-		else
-		{
-			// tell client what we got (for testing!)
-			client.receiveMessage(message);
-			//also send message to the server!
-			clientOutput.push(message);
-		}*/
 		
-		switch(message[0])
+		if(message[0].equals("confirm_host") || message[0].equals("cancel_load") || message[0].equals("button") || message[0].equals("quit"))
 		{
-			case("exit"):
-				return;// close this thread
-			case("join"):
-				// tell client what we got (for testing!)
-				client.receiveMessage(message);
-				break;
-			case("host"):
-				// tell client what we got (for testing!)
-				client.receiveMessage(message);
-				//Let server know that it is time to start!
-				clientOutput.push(message);
-				break;
-			default:
-				
-				//also send message to the server!
-				clientOutput.push(message);
-				break;
+			clientOutput.push(message); //forward message to serverloop
+		}
+		else if(message[0].equals("exit"))
+		{
+			return;//close this thread
 		}
 	}
 
 	// When getting a new message from the server, interpret what to do here
 	private void interpretServerMessage(String[] message)
 	{
-		/*System.out.print("New Input from server:");
-
+		System.out.print("ClientLoop: New Output from ServerLoop:");
 		for (int i = 0; i < message.length; i++)
 		{
 			System.out.print(" " + message[i]);
 		}
-
-		System.out.println(".");*/
+		System.out.println(".");
 		
-		// tell server what we got (for testing!)
-		//serverOutput.push(message);
+		//Message to be sent to Client (if necessary)
+		String[] connectMessage = new String[message.length + 1]; //create new message with one extra spot for client identifier
+		System.arraycopy(message, 0, connectMessage, 1, message.length);
+		connectMessage[0] = "client";
+
+		if(message[0].equals("enemy_connected") || message[0].equals("valid_placement") || message[0].equals("invalid_placement")
+				|| message[0].equals("all_ships_placed") || message[0].equals("your_ships_placed"))
+		{
+			client.receiveMessage(connectMessage);
+		}
 	}
 }
