@@ -11,6 +11,8 @@ public class ClientLoop implements Runnable
 
 	int UPS = 4; // Just a few updates per second should be good enough for this program
 	boolean running = true;
+	
+	ClientTCP clientTCP;
 
 	public ClientLoop(Client c, MessageQueue newQueue, MessageQueue _clientOutput, MessageQueue _serverOutput)
 	{
@@ -74,9 +76,23 @@ public class ClientLoop implements Runnable
 		}
 		System.out.println(".");
 		
-		if(message[0].equals("confirm_host") || message[0].equals("cancel_load") || message[0].equals("button") || message[0].equals("quit"))
+		if(message[0].equals("confirm_host") 
+				|| message[0].equals("cancel_load") 
+				|| message[0].equals("button") 
+				|| message[0].equals("quit") 
+//				|| message[0].equals("confirm_join")
+				|| message[0].equals("cancel_join"))
 		{
 			clientOutput.push(message); //forward message to serverloop
+		}
+		else if(message[0].equals("confirm_join"))
+		{
+			String hostIP = message[1];
+			int port = Integer.parseInt(message[2]);
+			String username = message[3];
+			this.clientTCP = new ClientTCP(port, this.serverOutput, hostIP, username);
+			if (this.clientTCP.start())
+				System.out.println("ClientLoop: Client has successfully connected!");
 		}
 		else if(message[0].equals("exit"))
 		{
