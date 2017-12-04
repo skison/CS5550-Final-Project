@@ -1,10 +1,11 @@
 package edu.wmich.cs.samuel.kison.Server;
 
 import edu.wmich.cs.samuel.kison.MessageQueue;
+import edu.wmich.cs.samuel.kison.Client.ClientTCP;
 
 //Code taken from https://stackoverflow.com/questions/18283199/java-main-game-loop
 
-public class ServerLoop implements Runnable
+public class ServerLoop extends Thread
 {
 	private int UPS = 4; // Just a few updates per second should be good enough for this program
 	private boolean running = true;
@@ -14,12 +15,15 @@ public class ServerLoop implements Runnable
 
 	// The 2 input queues for each player
 	private MessageQueue player1Input;
-	// InputQueue player2Input = null;
+	private MessageQueue player2Input = null;
 
 	// The 2 output queues for each player
 	private MessageQueue player1Output;
-	// OutputQueue player2Output = null;
+	private MessageQueue player2Output = null;
 
+	private ServerTCP serverTCP;
+	private ClientTCP clientTCP;
+	
 	public ServerLoop(MessageQueue client1Input, MessageQueue client1Output)
 	{
 		// connect player 1 to server
@@ -128,7 +132,7 @@ public class ServerLoop implements Runnable
 			System.out.print("ServerLoop: New Input from player 1:");
 			for (int i = 0; i < message.length; i++)
 			{
-				System.out.print(" " + message[i]);
+				System.out.print(i+ ":" + message[i] + " ");
 			}
 			System.out.println(".");
 
@@ -141,11 +145,41 @@ public class ServerLoop implements Runnable
 						data.reset();
 						data.setPlayer1Name(message[2]);
 						//TODO: allow player 2 connection to update state to Start_Game_Preparation. For now, just pretend like a second player has connected
-						data.setPlayer2Name("Example Enemy");
-						state.setCurrentState("Setup_Game");
-						player1Output.push(new String[] { "enemy_connected", data.getPlayer2Name() });
+						
+						//get port number! that is on message[1]
+						int port = Integer.parseInt(message[1]);
+						this.serverTCP = new ServerTCP(port, this.player2Input);
+						this.serverTCP.start();
+						
+						
+						
+						
+						
+//						data.setPlayer2Name("Example Enemy");
+//						state.setCurrentState("Setup_Game");
+//						player1Output.push(new String[] { "enemy_connected", data.getPlayer2Name() });
 					}
 					break;
+					
+					
+					
+					
+				case ("confirm_join"): //waiting for the server to get client info
+					state.setCurrentState("Setup_Game");
+					
+				
+					//this is where Client will start their Client Loop with TCP connection
+					
+				
+				
+				
+//					player1Output.push(new String[] { "enemy_connected", data.getPlayer2Name() });
+//					player2Output.push(new String[] { "enemy_connected", data.getPlayer1Name() });
+					break;
+					
+					
+					
+					
 				case ("cancel_load"): //Time for server to go back to a closed state if loading
 					if (state.getCurrentState().equals("Loading_Game"))
 					{
