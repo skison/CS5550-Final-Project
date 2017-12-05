@@ -1,5 +1,7 @@
 package edu.wmich.cs.samuel.kison.Server;
 
+import java.io.IOException;
+
 import edu.wmich.cs.samuel.kison.MessageQueue;
 import edu.wmich.cs.samuel.kison.Client.ClientTCP;
 
@@ -15,11 +17,11 @@ public class ServerLoop extends Thread
 
 	// The 2 input queues for each player
 	private MessageQueue player1Input;
-	private MessageQueue player2Input = null;
+	private MessageQueue player2Input;
 
 	// The 2 output queues for each player
 	private MessageQueue player1Output;
-	private MessageQueue player2Output = null;
+	private MessageQueue player2Output;
 
 	private ServerTCP serverTCP;
 	private ClientTCP clientTCP;
@@ -29,6 +31,9 @@ public class ServerLoop extends Thread
 		// connect player 1 to server
 		player1Input = client1Input;
 		player1Output = client1Output;
+		
+		player2Input = new MessageQueue();
+		player2Output = new MessageQueue();
 	}
 
 	@Override
@@ -58,7 +63,7 @@ public class ServerLoop extends Thread
 			{
 				//System.out.println("Server running! " + totalTicks);
 				checkInput();
-				//update();
+				sendOutput();
 
 				ticks++;
 				totalTicks++;
@@ -99,23 +104,38 @@ public class ServerLoop extends Thread
 				 */
 			}
 		}
-		/*if (!player2Input.isEmpty()) //if there is new input to be had from player 2
+		if (!player2Input.isEmpty()) //if there is new input to be had from player 2
 		{
 			while (!player2Input.isEmpty())
 			{
-				interpretPlayerMessage(true, player2Input.pop());
+				interpretPlayerMessage(false, player2Input.pop());
 			}
-		}*/
+		}
 	}
 
-	private void checkOutput()
+	/**
+	 * Used only to send String[] to external client
+	 */
+	private void sendOutput()
 	{
-		/*
-		 * if(!player1Output.isEmpty()) { System.out.println("New Output!");
-		 * 
-		 * while(!player1Output.isEmpty()) {
-		 * System.out.println(player1Output.pop().toString()); } }
-		 */
+		
+		 if(!player2Output.isEmpty()) 
+		 { 
+			System.out.println("ServerLoop: New Output to send to external client(Player 2)!");
+			while(!player2Output.isEmpty()) {
+				System.out.print("ServerLoop: Contents after pop inside sendOutput(): ");
+				String[] message = this.player2Output.pop();
+				
+				for (int i = 0; i < message.length; i++)
+				{
+					System.out.print(i+ ":" + message[i] + " ");
+				}
+				System.out.println(".");
+				 
+				this.serverTCP.send(message);
+			} 
+		 }
+		 
 	}
 
 	// TODO: make this work with TCP instead
@@ -149,43 +169,36 @@ public class ServerLoop extends Thread
 						//get port number! that is on message[1]
 						int port = Integer.parseInt(message[1]);
 						this.serverTCP = new ServerTCP(port, this.player2Input);
-						this.serverTCP.start();
-						
-						
-						
-						
-						
-//						data.setPlayer2Name("Example Enemy");
-//						state.setCurrentState("Setup_Game");
-//						player1Output.push(new String[] { "enemy_connected", data.getPlayer2Name() });
+						this.serverTCP.run();
 					}
-					break;
-					
-					
-					
-					
-				case ("confirm_join"): //waiting for the server to get client info
-					state.setCurrentState("Setup_Game");
-					
-				
-					//this is where Client will start their Client Loop with TCP connection
-					
-				
-				
-				
-//					player1Output.push(new String[] { "enemy_connected", data.getPlayer2Name() });
-//					player2Output.push(new String[] { "enemy_connected", data.getPlayer1Name() });
 					break;
 					
 					
 					
 					
 				case ("cancel_load"): //Time for server to go back to a closed state if loading
+					System.out.println("ServerLoop: in cancel_load... current state is: " + this.state.getCurrentState());
 					if (state.getCurrentState().equals("Loading_Game"))
 					{
 						state.setCurrentState("Closed");
+						try {
+							System.out.println("ServerLoop: About to exit server socket... closing serverTCP serverSocket...");
+							this.serverTCP.serverSocket.close();
+							this.serverTCP.serverSocket.accept();
+							System.out.println("ServerLoop: Have exited server socket and accepted... should throw exception...");
+							
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+						this.serverTCP.close();
+						//this.serverTCP.stop();
 					}
 					break;
+					
+					
+					
+					
 				case ("button"): //Player clicked a button, either to place a ship or to attack
 					if (state.getCurrentState().equals("Setup_Game") && message[1].equals("true")) //it was during setup, also double check to make sure correct side of board was clicked
 					{
@@ -202,20 +215,12 @@ public class ServerLoop extends Thread
 								data.incShipCount(true); //increment the counter for number of ships placed
 								player1Output.push(new String[] {"valid_placement", currentShip, message[4], message[2], message[3]}); //notify player of correct placement
 								
-								//For testing purposes, also place player2's ships
-								//TODO: get rid of this logic
-								data.addShip(new Ship(data.getCurrentShipToPlace(false), message[4], Integer.parseInt(message[2]),
-										Integer.parseInt(message[3]), data.getShipLength(data.getCurrentShipToPlace(false))), false);
-								data.incShipCount(false);
-								
-								
 								//Check to see if all ships have been placed by BOTH players; if so, notify both players and change state
 								if(data.getCurrentShipToPlace(true).equals("") && data.getCurrentShipToPlace(false).equals(""))
 								{
-									player1Output.push(new String[] {"all_ships_placed", "true"}); //notify player 1 that it is now their turn
-									//TODO: send player2 the same message
-									//player2Output.push(new String[] {"all_ships_placed", "false"}); //notify player 2 that it isn't their turn
-									state.setCurrentState("Player1_Turn");//Move to playing state; reward player 1 for placing all ships first
+									player1Output.push(new String[] {"all_ships_placed", "false"}); //notify player 1 that it is now enemy's turn
+									player2Output.push(new String[] {"all_ships_placed", "true"}); //notify player 2 that it is their turn
+									state.setCurrentState("Player2_Turn");//Move to playing state; reward player 2 for placing all ships first
 								}
 								else if(data.getCurrentShipToPlace(true).equals("")) //if ONLY this player has placed all their ships, let them know!
 								{
@@ -229,32 +234,112 @@ public class ServerLoop extends Thread
 						}
 					}
 					break;
+					
+					
+					
+					
+					
 				case("quit"):
 					if(state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Player1_Turn") || state.getCurrentState().equals("Player2_Turn"))//can only quit if mid-game
 					{
-						//TODO: notify player(s) that this player has disconnected!
-						//player2Output.push(new String[] {"client_quit", data.getPlayer2Name})
+						player1Output.push(new String[] {"client_quit", data.getPlayer2Name()}); //notify player(s) that this player has disconnected!
+						player2Output.push(new String[] {"client_quit", data.getPlayer2Name()}); //notify player(s) that this player has disconnected!
 						state.setCurrentState("Closed"); //close game
+						this.serverTCP.close();
 					}
 					break;
+					
+					
+					
 				default:
 					break;
 
 			}
-
-			//System.out.println("Current state: " + state.getCurrentState());
-
-			// tell server what we got (for testing!)
-			// serverOutput.push(message);
 		}
 		else //Player 2
 		{
 			System.out.print("ServerLoop: New Input from player 2:");
 			for (int i = 0; i < message.length; i++)
 			{
-				System.out.print(" " + message[i]);
+				System.out.print(i + ":" + message[i] + " ");
 			}
 			System.out.println(".");
+			
+			switch(message[0]) 
+			{
+			
+				case("confirm_join") :
+					data.setPlayer2Name(message[3]);
+					state.setCurrentState("Setup_Game");
+					this.player1Output.push(new String[] { "enemy_connected", data.getPlayer2Name() });
+					this.player2Output.push(new String[] { "enemy_connected", data.getPlayer1Name() });
+					break;
+				
+					
+				case ("cancel_load"): //Time for server to go back to a closed state if loading
+					if (state.getCurrentState().equals("Loading_Game"))
+					{
+						state.setCurrentState("Closed");
+						this.serverTCP.close();
+					}
+					break;
+					
+					
+					
+					
+				case ("button"): //Player clicked a button, either to place a ship or to attack
+					if (state.getCurrentState().equals("Setup_Game") && message[1].equals("true")) //it was during setup, also double check to make sure correct side of board was clicked
+					{
+						String currentShip = data.getCurrentShipToPlace(false);//grab current ship name
+						int currentShipLength = data.getShipLength(currentShip);
+						if (!currentShip.equals("")) //make sure name is valid
+						{
+							Ship testShip = new Ship(currentShip, message[4], Integer.parseInt(message[2]),
+									Integer.parseInt(message[3]), currentShipLength);
+
+							if (data.couldShipFit(testShip, false)) //valid ship placement!
+							{
+								data.addShip(testShip, false); //add in the new ship
+								data.incShipCount(false); //increment the counter for number of ships placed
+								player2Output.push(new String[] {"valid_placement", currentShip, message[4], message[2], message[3]}); //notify player of correct placement
+								
+								
+								//Check to see if all ships have been placed by BOTH players; if so, notify both players and change state
+								if(data.getCurrentShipToPlace(true).equals("") && data.getCurrentShipToPlace(false).equals(""))
+								{
+									player2Output.push(new String[] {"all_ships_placed", "false"}); //notify player 2 that it is now enemy's turn
+									player1Output.push(new String[] {"all_ships_placed", "true"}); //notify player 1 that it is their turn
+									state.setCurrentState("Player1_Turn");//Move to playing state; reward player 1 for placing all ships first
+								}
+								else if(data.getCurrentShipToPlace(true).equals("")) //if ONLY this player has placed all their ships, let them know!
+								{
+									player2Output.push(new String[] {"your_ships_placed"});
+								}
+							}
+							else //invalid ship placement
+							{
+								player2Output.push(new String[] {"invalid_placement", currentShip}); //notify player of incorrect placement
+							}
+						}
+					}
+					break;
+					
+					
+					
+				case("quit"):
+					if(state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Player1_Turn") || state.getCurrentState().equals("Player2_Turn"))//can only quit if mid-game
+					{
+						player1Output.push(new String[] {"client_quit", data.getPlayer2Name()}); //notify player(s) that this player has disconnected!
+						player2Output.push(new String[] {"client_quit", data.getPlayer2Name()}); //notify player(s) that this player has disconnected!
+						state.setCurrentState("Closed"); //close game'
+						this.serverTCP.close();
+					}
+					break;
+					
+					
+				default:
+					break;
+			}
 		}
 
 	}

@@ -13,7 +13,7 @@ import edu.wmich.cs.samuel.kison.MessageQueue;
  * @author alan_
  *
  */
-public class ServerToClientThread extends Thread {
+public class ServerInputThread extends Thread {
 	Socket socket;
 	ObjectInputStream ois;
 	ObjectOutputStream oos; 
@@ -22,7 +22,7 @@ public class ServerToClientThread extends Thread {
 	String username; // 
 	MessageQueue queue;
 	
-	public ServerToClientThread(Socket pSocket, MessageQueue pQueue) {
+	public ServerInputThread(Socket pSocket, MessageQueue pQueue) {
 		this.socket = pSocket;
 		this.queue = pQueue;
 		System.out.println("ServerToClientThread: Thread is about to create Object Input and Output Streams (ois/oos)...");
@@ -51,13 +51,13 @@ public class ServerToClientThread extends Thread {
 		{
 			try
 			{
-				System.out.println("ServerToClientThread: Hanging at readObject for MessageQueue...");
-				this.queue = (MessageQueue) ois.readObject();
-				System.out.println("ServerToClientThread: Successfully readObject for MessageQueue...\nContents: " + this.queue.toString());
+				System.out.println("ServerToClientThread: Hanging at readObject for String[]...");
+				this.queue.push((String[]) ois.readObject());
+				System.out.println("ServerToClientThread: Successfully readObject for String[]...\nContents: " + this.queue.toString());
 			}
 			catch (IOException e) 
 			{
-				System.out.println("ServerToClientThread: Exception on reading MessageQueue object!!!!");
+				System.out.println("ServerToClientThread: Exception on reading String[] object!!!!");
 				break;
 			}
 			catch (ClassNotFoundException e2)

@@ -6,12 +6,20 @@ import java.net.Socket;
 
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
-public class ServerTCP {
-	MessageQueue queue;
+/**
+ * This class has the ability to send a String[] to external <i>client</i> with <b>send(String[])</b>. The class always 
+ * reads a String[] from external Client and updates the shared MessageQueue defined in ServerLoop above.
+ * 
+ * @author alan_
+ *
+ */
+public class ServerTCP extends Thread{
+	MessageQueue queue; //defined in ServerLoop above
 	int port;
 	//private boolean keepGoing;
 	ServerSocket serverSocket;
-	ServerToClientThread clientThread;
+	ServerInputThread clientThread;
+	Socket socket;
 	
 	public ServerTCP(int pPort, MessageQueue pQueue) {
 		this.queue = pQueue;
@@ -24,10 +32,10 @@ public class ServerTCP {
 		{
 			this.serverSocket = new ServerSocket(this.port);
 			System.out.println("ServerTCP: Waiting for Client to connect on port: " + this.port);
-			Socket socket = serverSocket.accept();
+			this.socket = serverSocket.accept();
 			
 			System.out.println("ServerTCP: Client has connected!");
-			this.clientThread = new ServerToClientThread(socket, this.queue);
+			this.clientThread = new ServerInputThread(socket, this.queue);
 			clientThread.start();
 		} 
 		// could not establish connection
@@ -36,15 +44,16 @@ public class ServerTCP {
 		}
 	}
 	
-	public void stop() {
+	public void close() {
 		try {
+			System.out.println("STOPPING THREAD");
 			this.serverSocket.close();
 			this.clientThread.ois.close();
 			this.clientThread.oos.close();
 			this.clientThread.socket.close();
 			
 			//connect to myself as Client to exit statement ?
-			new Socket("localhost", this.port);
+			//new Socket("localhost", this.port);
 		} catch (IOException e) {
 			System.out.println("ServerTCP: Exception on stop()...");
 		}
@@ -52,11 +61,12 @@ public class ServerTCP {
 	}
 	
 	//used to send queue messages
-	public void send(MessageQueue pQueueToSend) {
+	public void send(String[] pMessageToSend) {
 		try {
-			this.clientThread.oos.writeObject(pQueueToSend);
+			this.clientThread.oos.writeObject(pMessageToSend);
 		} catch (IOException e) {
-			System.out.println("ServerTCP: Exception during send(MessageQueue): " + e + "\n");
+			System.out.println("ServerTCP: Exception during send(String[]): " + e + "\n");
 		}
 	}
+	
 }
