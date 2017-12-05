@@ -2,7 +2,7 @@ package edu.wmich.cs.samuel.kison.Server;
 
 import java.util.ArrayList;
 
-/*
+/**
  * This class stores Ship instances for every ship on the board for both players,
  * as well as a 2-dimensional boolean array for each player keeping track of which
  * locations have been hit.
@@ -55,9 +55,13 @@ public class ServerData
 		}
 	}
 
-	/*
+	/**
 	 * Used to attack a player's board at a specific spot
-	 * Return true if a ship was hit too
+	 * 
+	 * @param x x coordinate
+	 * @param y y coordinate
+	 * @param player PLAYER YOU ARE ATTACKING!!! (true = player 1, false = player 2)
+	 * @return true if attack hit an enemy's ship
 	 */
 	public boolean attack(int x, int y, boolean player)
 	{

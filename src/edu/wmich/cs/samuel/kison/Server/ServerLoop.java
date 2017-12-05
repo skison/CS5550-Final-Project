@@ -191,38 +191,11 @@ public class ServerLoop extends Thread
 				case ("button"): //Player clicked a button, either to place a ship or to attack
 					if (state.getCurrentState().equals("Setup_Game") && message[1].equals("true")) //it was during setup, also double check to make sure correct side of board was clicked
 					{
-						String currentShip = data.getCurrentShipToPlace(true);//grab current ship name
-						int currentShipLength = data.getShipLength(currentShip);
-						if (!currentShip.equals("")) //make sure name is valid
-						{
-							Ship testShip = new Ship(currentShip, message[4], Integer.parseInt(message[2]),
-									Integer.parseInt(message[3]), currentShipLength);
-
-							if (data.couldShipFit(testShip, true)) //valid ship placement!
-							{
-								data.addShip(testShip, true); //add in the new ship
-								data.incShipCount(true); //increment the counter for number of ships placed
-								player1Output.push(new String[] { "valid_placement", currentShip, message[4],
-										message[2], message[3] }); //notify player of correct placement
-
-								//Check to see if all ships have been placed by BOTH players; if so, notify both players and change state
-								if (data.getCurrentShipToPlace(true).equals("")
-										&& data.getCurrentShipToPlace(false).equals(""))
-								{
-									player1Output.push(new String[] { "all_ships_placed", "false" }); //notify player 1 that it is now enemy's turn
-									player2Output.push(new String[] { "all_ships_placed", "true" }); //notify player 2 that it is their turn
-									state.setCurrentState("Player2_Turn");//Move to playing state; reward player 2 for placing all ships first
-								}
-								else if (data.getCurrentShipToPlace(true).equals("")) //if ONLY this player has placed all their ships, let them know!
-								{
-									player1Output.push(new String[] { "your_ships_placed" });
-								}
-							}
-							else //invalid ship placement
-							{
-								player1Output.push(new String[] { "invalid_placement", currentShip }); //notify player of incorrect placement
-							}
-						}
+						placeShip(true, message);
+					}
+					else if(state.getCurrentState().equals("Player1_Turn") && message[1].equals("false")) //during player 1's turn, on enemy's side of board
+					{
+						takeTurn(true, message);
 					}
 					break;
 
@@ -272,38 +245,11 @@ public class ServerLoop extends Thread
 				case ("button"): //Player clicked a button, either to place a ship or to attack
 					if (state.getCurrentState().equals("Setup_Game") && message[1].equals("true")) //it was during setup, also double check to make sure correct side of board was clicked
 					{
-						String currentShip = data.getCurrentShipToPlace(false);//grab current ship name
-						int currentShipLength = data.getShipLength(currentShip);
-						if (!currentShip.equals("")) //make sure name is valid
-						{
-							Ship testShip = new Ship(currentShip, message[4], Integer.parseInt(message[2]),
-									Integer.parseInt(message[3]), currentShipLength);
-
-							if (data.couldShipFit(testShip, false)) //valid ship placement!
-							{
-								data.addShip(testShip, false); //add in the new ship
-								data.incShipCount(false); //increment the counter for number of ships placed
-								player2Output.push(new String[] { "valid_placement", currentShip, message[4],
-										message[2], message[3] }); //notify player of correct placement
-
-								//Check to see if all ships have been placed by BOTH players; if so, notify both players and change state
-								if (data.getCurrentShipToPlace(true).equals("")
-										&& data.getCurrentShipToPlace(false).equals(""))
-								{
-									player2Output.push(new String[] { "all_ships_placed", "false" }); //notify player 2 that it is now enemy's turn
-									player1Output.push(new String[] { "all_ships_placed", "true" }); //notify player 1 that it is their turn
-									state.setCurrentState("Player1_Turn");//Move to playing state; reward player 1 for placing all ships first
-								}
-								else if (data.getCurrentShipToPlace(true).equals("")) //if ONLY this player has placed all their ships, let them know!
-								{
-									player2Output.push(new String[] { "your_ships_placed" });
-								}
-							}
-							else //invalid ship placement
-							{
-								player2Output.push(new String[] { "invalid_placement", currentShip }); //notify player of incorrect placement
-							}
-						}
+						placeShip(false, message);
+					}
+					else if(state.getCurrentState().equals("Player2_Turn") && message[1].equals("false")) //during player 2's turn, on enemy's side of board
+					{
+						takeTurn(false, message);
 					}
 					break;
 
@@ -324,15 +270,129 @@ public class ServerLoop extends Thread
 		}
 
 	}
-
-	/*
-	 * Do something depending on the state of the server
+	
+	
+	/**
+	 * Called when a client has clicked a button during the Player1Turn or Player2Turn phase (to attack enemy)
+	 * @param player True for player 1, False for player 2
+	 * @param message The full message w/side of board and x/y coords
 	 */
-	/*private void update()
+	private void takeTurn(boolean player, String[] message)
 	{
-		if(state.getCurrentState().equals("Loading_Game"))
+		int xCord = Integer.parseInt(message[2]);
+		int yCord = Integer.parseInt(message[3]);
+		
+		if(!data.hasBeenAttacked(xCord, yCord, player)) //new attack location; invalid otherwise
 		{
-			//Check if 
+			if(data.attack(xCord, yCord, !player)) //hit enemy!
+			{
+				if(player)//player 1
+				{
+					player1Output.push(new String[] { "player1_hit_success", message[2], message[3]}); //notify player1 that they hit the enemy at this location
+					player2Output.push(new String[] { "player1_hit_success", message[2], message[3]}); //notify player2 that they were hit
+				}
+				else//player 2
+				{
+					player1Output.push(new String[] { "player2_hit_success", message[2], message[3]}); //notify player1 that they were hit
+					player2Output.push(new String[] { "player2_hit_success", message[2], message[3]}); //notify player2 that they hit the enemy at this location
+				}
+			}
+			else //missed!
+			{
+				if(player)//player 1
+				{
+					player1Output.push(new String[] { "player1_hit_failure", message[2], message[3]}); //notify player1 that they didn't hit the enemy at this location
+					player2Output.push(new String[] { "player1_hit_failure", message[2], message[3]}); //notify player2 that they weren't hit
+				}
+				else//player 2
+				{
+					player1Output.push(new String[] { "player2_hit_failure", message[2], message[3]}); //notify player1 that they weren't hit
+					player2Output.push(new String[] { "player2_hit_failure", message[2], message[3]}); //notify player2 that they didn't hit the enemy at this location
+				}
+			}
+			
+			if(player)
+			{
+				state.setCurrentState("Player2_Turn"); //set to player2's turn if it was player1's
+			}
+			else
+			{
+				state.setCurrentState("Player1_Turn"); //set to player1's turn if it was player2's
+			}
 		}
-	}*/
+		
+		
+	}
+	
+
+	/**
+	 * Called when a client has clicked a button during the setup phase (to place a ship)
+	 * @param player True for player 1, False for player 2
+	 * @param message The full message w/side of board, rotation, and x/y coords
+	 */
+	private void placeShip(boolean player, String[] message)
+	{
+		String currentShip = data.getCurrentShipToPlace(player);//grab current ship name
+		int currentShipLength = data.getShipLength(currentShip);
+		if (!currentShip.equals("")) //make sure name is valid
+		{
+			Ship testShip = new Ship(currentShip, message[4], Integer.parseInt(message[2]),
+					Integer.parseInt(message[3]), currentShipLength);
+
+			if (data.couldShipFit(testShip, player)) //valid ship placement!
+			{
+				data.addShip(testShip, player); //add in the new ship
+				data.incShipCount(player); //increment the counter for number of ships placed
+				if(player)
+				{
+					player1Output.push(new String[] { "valid_placement", currentShip, message[4], message[2], message[3] }); //notify player of correct placement
+				}
+				else
+				{
+					player2Output.push(new String[] { "valid_placement", currentShip, message[4], message[2], message[3] }); //notify player of correct placement
+				}
+				
+
+				//Check to see if all ships have been placed by BOTH players; if so, notify both players and change state
+				if (data.getCurrentShipToPlace(true).equals("") && data.getCurrentShipToPlace(false).equals(""))
+				{
+					if(player)
+					{
+						player1Output.push(new String[] { "all_ships_placed", "false" }); //notify player 1 that it is now enemy's turn
+						player2Output.push(new String[] { "all_ships_placed", "true" }); //notify player 2 that it is their turn
+						state.setCurrentState("Player2_Turn");//Move to playing state; reward player 2 for placing all ships first
+					}
+					else
+					{
+						player2Output.push(new String[] { "all_ships_placed", "false" }); //notify player 2 that it is now enemy's turn
+						player1Output.push(new String[] { "all_ships_placed", "true" }); //notify player 1 that it is their turn
+						state.setCurrentState("Player1_Turn");//Move to playing state; reward player 1 for placing all ships first
+					}
+					
+				}
+				else if (data.getCurrentShipToPlace(player).equals("")) //if ONLY this player has placed all their ships, let them know!
+				{
+					if(player)
+					{
+						player1Output.push(new String[] { "your_ships_placed" });
+					}
+					else
+					{
+						player2Output.push(new String[] { "your_ships_placed" });
+					}
+				}
+			}
+			else //invalid ship placement
+			{
+				if(player)
+				{
+					player1Output.push(new String[] { "invalid_placement", currentShip }); //notify player of incorrect placement
+				}
+				else
+				{
+					player2Output.push(new String[] { "invalid_placement", currentShip }); //notify player of incorrect placement
+				}
+			}
+		}
+	}
 }
