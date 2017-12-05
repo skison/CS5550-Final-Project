@@ -125,13 +125,25 @@ public class Client
 						else //IP/Port is ok to TRY
 						{
 							state.setCurrentState("Loading_Game");
-							gui.updateGUI(new String[] { "load" });
+							gui.updateGUI(new String[] { "client_load" });
+							gui.updateGUI(new String[] { "disable_join_bar" }); //disable the options on the join menu bar (because trying to connect)
 							String[] connectMessage = new String[actualMessage.length + 1]; //create new message with one extra spot for playerName
 							System.arraycopy(actualMessage, 0, connectMessage, 0, actualMessage.length);
 							connectMessage[connectMessage.length - 1] = playerName;
 							clientQueue.push(connectMessage); //tell clientLoop that it's time to join game
 							gui.updateGUI(new String[] { "panel_update", "notify", "Attempting to join game..." });
 						}
+					}
+					break;
+				case ("retry_join"):
+					if (state.getCurrentState().equals("Loading_Game")) //can only retry loading if in loading state
+					{
+						String[] connectMessage = new String[actualMessage.length + 1]; //create new message with one extra spot for playerName
+						System.arraycopy(actualMessage, 0, connectMessage, 0, actualMessage.length);
+						connectMessage[connectMessage.length - 1] = playerName;
+						clientQueue.push(connectMessage); //tell clientLoop that it's time to join game
+						gui.updateGUI(new String[] { "disable_join_bar" }); //disable the options on the join menu bar (because trying to connnect)
+						gui.updateGUI(new String[] { "panel_update", "notify", "Attempting to join game..." });
 					}
 					break;
 				case ("confirm_host"):
@@ -144,7 +156,7 @@ public class Client
 						else //port number is ok to TRY
 						{
 							state.setCurrentState("Loading_Game");
-							gui.updateGUI(new String[] { "load" });
+							gui.updateGUI(new String[] { "host_load" });
 							String[] connectMessage = new String[actualMessage.length + 1]; //create new message with one extra spot for playerName
 							System.arraycopy(actualMessage, 0, connectMessage, 0, actualMessage.length);
 							connectMessage[connectMessage.length - 1] = playerName;
@@ -163,16 +175,16 @@ public class Client
 					}
 					break;
 				case ("button"):
-					if(state.getCurrentState().equals("Setup_Game")) //User is placing ships during setup
+					if (state.getCurrentState().equals("Setup_Game")) //User is placing ships during setup
 					{
-						if(actualMessage[1].equals("true"))//you have to place ships on your side only
+						if (actualMessage[1].equals("true"))//you have to place ships on your side only
 						{
 							clientQueue.push(actualMessage); //tell clientLoop where the ship is trying to be placed
 						}
 					}
 					break;
 				case ("quit"):
-					if(state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game")) //need to be mid-game to quit it
+					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game")) //need to be mid-game to quit it
 					{
 						state.setCurrentState("Start");
 						gui.updateGUI(new String[] { "start" });
@@ -189,32 +201,39 @@ public class Client
 
 			switch (actualMessage[0])
 			{
-				case("enemy_connected"):
-					if(state.getCurrentState().equals("Loading_Game"))//can only connect with enemy if in Loading_Game state
+				case ("join_failed"):
+					System.out.println("ClientLoop Join failed in state " + state.getCurrentState());
+					gui.updateGUI(new String[] { "enable_join_bar" }); //enable the options on the join menu bar (because no longer trying to connect)
+					gui.updateGUI(new String[] { "panel_update", "notify", "Failed to join game!" });
+					break;
+				case ("enemy_connected"):
+					if (state.getCurrentState().equals("Loading_Game"))//can only connect with enemy if in Loading_Game state
 					{
 						state.setCurrentState("Setup_Game");
 						gui.updateGUI(new String[] { "setup" });
 						enemyName = actualMessage[1]; //set enemy's name
-						gui.updateGUI(new String[] { "panel_update", "enemy_name", enemyName});//set enemy's name on gui
+						gui.updateGUI(new String[] { "panel_update", "enemy_name", enemyName });//set enemy's name on gui
 						gui.updateGUI(new String[] { "panel_update", "notify", "Place your ships!" });
 					}
 					break;
-				case("valid_placement"):
-					if(state.getCurrentState().equals("Setup_Game")) //can only setup ships during setup period
+				case ("valid_placement"):
+					if (state.getCurrentState().equals("Setup_Game")) //can only setup ships during setup period
 					{
-						gui.getPanel().getBoard(true).placeShip(actualMessage[1], Integer.parseInt(actualMessage[3]), Integer.parseInt(actualMessage[4]), actualMessage[2]);
+						gui.getPanel().getBoard(true).placeShip(actualMessage[1], Integer.parseInt(actualMessage[3]),
+								Integer.parseInt(actualMessage[4]), actualMessage[2]);
 					}
-				case("your_ships_placed"):
-					if(state.getCurrentState().equals("Setup_Game")) //must be during setup period
+				case ("your_ships_placed"):
+					if (state.getCurrentState().equals("Setup_Game")) //must be during setup period
 					{
-						gui.updateGUI(new String[] { "panel_update", "notify", "Waiting for enemy to finish placing ships..." }); //let player know that server is waiting for other player
+						gui.updateGUI(new String[] { "panel_update", "notify",
+								"Waiting for enemy to finish placing ships..." }); //let player know that server is waiting for other player
 					}
 					break;
-				case("all_ships_placed"):
-					if(state.getCurrentState().equals("Setup_Game")) //must be during setup period
+				case ("all_ships_placed"):
+					if (state.getCurrentState().equals("Setup_Game")) //must be during setup period
 					{
 						state.setCurrentState("Playing_Game");//change state to 'playing'
-						if(actualMessage[1].equals("true")) //it is this player's turn
+						if (actualMessage[1].equals("true")) //it is this player's turn
 						{
 							gui.updateGUI(new String[] { "panel_update", "notify", playerName + "'s turn!" });
 						}

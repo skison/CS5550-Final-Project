@@ -26,8 +26,13 @@ public class GUIFrame
 	//Menubars (swapped out depending on game state)
 	private JMenuBar startMenuBar; //the first menubar that appears at the top of the screen
 	private JMenuBar joinMenuBar; //menubar used when preparing to join a game
+		JTextField ipTextBox; //stored in this scope so that they can be reset from another method
+		JTextField portTextBox; //^
 	private JMenuBar hostMenuBar; //menubar used when preparing to host a game
-	private JMenuBar loadingMenuBar; //menubar used when joining a game or creating a server
+	private JMenuBar hostLoadingMenuBar; //menubar used when creating a server
+	private JMenuBar clientLoadingMenuBar; //menubar used when joining a server
+		JButton clientLoadCancelButton; //stored in this scope so that they can be reset from another method
+		JButton clientLoadRetryButton; //^
 	private JMenuBar setupMenuBar; //menubar used when setting up ships at start of game
 		JMenu rotation = null; //this is the JMenu object within setupMenuBar that holds the current rotation for the ship
 		JRadioButtonMenuItem rotationUp; //stored in this scope so that they can be reset from another method
@@ -111,11 +116,27 @@ public class GUIFrame
 			f.setJMenuBar(joinMenuBar);
 			f.pack();
 		}
-		else if (updateType[0].equals("load"))
+		else if (updateType[0].equals("host_load"))
 		{
-			//System.out.println("GUI updating to loading state");
-			f.setJMenuBar(loadingMenuBar);
+			//System.out.println("GUI updating to host loading state");
+			f.setJMenuBar(hostLoadingMenuBar);
 			f.pack();
+		}
+		else if (updateType[0].equals("client_load"))
+		{
+			//System.out.println("GUI updating to client loading state");
+			f.setJMenuBar(clientLoadingMenuBar);
+			f.pack();
+		}
+		else if (updateType[0].equals("disable_join_bar"))
+		{
+			//System.out.println(">>>DISABLE");
+			enableClientLoadingMenuBar(false);
+		}
+		else if (updateType[0].equals("enable_join_bar"))
+		{
+			//System.out.println(">>>ENABLE");
+			enableClientLoadingMenuBar(true);
 		}
 		else if (updateType[0].equals("setup"))
 		{
@@ -138,7 +159,8 @@ public class GUIFrame
 		constructStartMenuBar();//startMenuBar
 		constructJoinMenuBar();//joinMenuBar
 		constructHostMenuBar();//hostMenuBar
-		constructLoadingMenuBar();//loadingMenuBar
+		constructHostLoadingMenuBar();//hostLoadingMenuBar
+		constructClientLoadingMenuBar();//clientloadingMenuBar
 		constructSetupMenuBar();//setupMenuBar
 		constructPlayMenuBar();//playMenuBar
 		constructEndMenuBar();//endMenuBar
@@ -187,13 +209,13 @@ public class GUIFrame
 		JMenu ipPrompt = new JMenu("Host IP:"); //IP prompt
 		ipPrompt.setEnabled(false);
 		joinMenuBar.add(ipPrompt);
-		JTextField ipTextBox = new JTextField("localhost", 10); //IP textbox (localhost by default)
+		ipTextBox = new JTextField("localhost", 10); //IP textbox (localhost by default)
 		ipTextBox.setMaximumSize(ipTextBox.getPreferredSize());
 		joinMenuBar.add(ipTextBox);
 		JMenu portPrompt = new JMenu("Host Port #:"); //Port prompt
 		portPrompt.setEnabled(false);
 		joinMenuBar.add(portPrompt);
-		JTextField portTextBox = new JTextField("2200", 4); //Port textbox (2200 by default)
+		portTextBox = new JTextField("2200", 4); //Port textbox (2200 by default)
 		portTextBox.setMaximumSize(portTextBox.getPreferredSize());
 		joinMenuBar.add(portTextBox);
 		JMenu divider = new JMenu("|"); //visual divider
@@ -245,15 +267,35 @@ public class GUIFrame
 		hostMenuBar.add(cancelButton);
 	}
 
-	private void constructLoadingMenuBar()
+	private void constructHostLoadingMenuBar()
 	{
-		loadingMenuBar = new JMenuBar();
+		hostLoadingMenuBar = new JMenuBar();
 		JButton cancelButton = new JButton("Cancel"); //cancel button
 		cancelButton.addActionListener((ActionEvent event) ->
 		{
 			client.receiveMessage(new String[] { "gui", "cancel_load" });
 		});
-		loadingMenuBar.add(cancelButton);
+		hostLoadingMenuBar.add(cancelButton);
+	}
+	
+	private void constructClientLoadingMenuBar()
+	{
+		clientLoadingMenuBar = new JMenuBar();
+		clientLoadCancelButton = new JButton("Cancel"); //cancel button
+		clientLoadCancelButton.addActionListener((ActionEvent event) ->
+		{
+			client.receiveMessage(new String[] { "gui", "cancel_load" });
+		});
+		clientLoadingMenuBar.add(clientLoadCancelButton);
+		JMenu divider = new JMenu("|"); //visual divider
+		divider.setEnabled(false);
+		clientLoadingMenuBar.add(divider);
+		clientLoadRetryButton = new JButton("Retry"); //retry button
+		clientLoadRetryButton.addActionListener((ActionEvent event) ->
+		{
+			client.receiveMessage(new String[] { "gui", "retry_join", ipTextBox.getText(), portTextBox.getText() });
+		});
+		clientLoadingMenuBar.add(clientLoadRetryButton);
 	}
 
 	private void constructSetupMenuBar()
@@ -388,6 +430,21 @@ public class GUIFrame
 				break;
 			default:
 				break;
+		}
+	}
+	
+	//Simple method that enables/disables the JButtons in the clientLoadingMenuBar
+	private void enableClientLoadingMenuBar(boolean shouldEnable)
+	{
+		if(shouldEnable)
+		{
+			clientLoadCancelButton.setEnabled(true);
+			clientLoadRetryButton.setEnabled(true);
+		}
+		else
+		{
+			clientLoadCancelButton.setEnabled(false);
+			clientLoadRetryButton.setEnabled(false);
 		}
 	}
 }

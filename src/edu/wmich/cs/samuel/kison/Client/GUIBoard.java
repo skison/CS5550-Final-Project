@@ -122,6 +122,7 @@ public class GUIBoard implements ActionListener
 	//code taken from https://stackoverflow.com/questions/9749121/java-image-rotation-with-affinetransform-outputs-black-image-but-works-well-whe
 	public BufferedImage rotateImage(BufferedImage inputImage, String rotation)
 	{
+		//System.out.println(">>ROTATING IMAGE " + rotation);
 		if(rotation == "Right" || rotation == "Left" || rotation == "Down")
 		{
 			AffineTransform tx = new AffineTransform();
@@ -168,30 +169,34 @@ public class GUIBoard implements ActionListener
 	 */
 	public void placeShip(String ship, int x, int y, String rotation)
 	{
-		//System.out.println(">>Call to placeShip(), rotation: " + rotation);
+		System.out.println(">>Call to placeShip(), rotation: " + rotation);
 		
 		BufferedImage[] shipParts = null; //start null
 		
 		switch(ship)
 		{
 			case("Destroyer"):
+				System.out.println(">>>Destroyer");
 				shipParts = new BufferedImage[2];
 				shipParts[0] = rotateImage(ImageHolder.getDestroyer(1), rotation);
 				shipParts[1] = rotateImage(ImageHolder.getDestroyer(2), rotation);
 				break;
 			case("Submarine"):
+				System.out.println(">>>Submarine");
 				shipParts = new BufferedImage[3];
 				shipParts[0] = rotateImage(ImageHolder.getSubmarine(1), rotation);
 				shipParts[1] = rotateImage(ImageHolder.getSubmarine(2), rotation);
 				shipParts[2] = rotateImage(ImageHolder.getSubmarine(3), rotation);
 				break;
 			case("Cruiser"):
+				System.out.println(">>>Cruiser");
 				shipParts = new BufferedImage[3];
 				shipParts[0] = rotateImage(ImageHolder.getCruiser(1), rotation);
 				shipParts[1] = rotateImage(ImageHolder.getCruiser(2), rotation);
 				shipParts[2] = rotateImage(ImageHolder.getCruiser(3), rotation);
 				break;
 			case("Battleship"):
+				System.out.println(">>>Battleship");
 				shipParts = new BufferedImage[4];
 				shipParts[0] = rotateImage(ImageHolder.getBattleship(1), rotation);
 				shipParts[1] = rotateImage(ImageHolder.getBattleship(2), rotation);
@@ -199,6 +204,7 @@ public class GUIBoard implements ActionListener
 				shipParts[3] = rotateImage(ImageHolder.getBattleship(4), rotation);
 				break;
 			case("Carrier"):
+				System.out.println(">>>Carrier");
 				shipParts = new BufferedImage[5];
 				shipParts[0] = rotateImage(ImageHolder.getCarrier(1), rotation);
 				shipParts[1] = rotateImage(ImageHolder.getCarrier(2), rotation);

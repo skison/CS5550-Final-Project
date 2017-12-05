@@ -50,6 +50,8 @@ public class ClientLoop implements Runnable
 
 			if (deltaU >= 1)
 			{
+				//System.out.println("Client tick");
+				
 				checkInput();// check input messages from gui and server (and interpret them)
 				
 				sendOutput();
@@ -129,8 +131,10 @@ public class ClientLoop implements Runnable
 				System.out.println("ClientLoop: Pushing message to internalClientOutput... going up to ServerLoop...");
 				internalClientOutput.push(pMessage); //forward message to serverloop
 			}
-			else if(pMessage[0].equals("confirm_join"))
+			else if(pMessage[0].equals("confirm_join") || pMessage[0].equals("retry_join"))
 			{
+				//overwrite pMessage[0] to "confirm_join" just in case it == "retry_join"
+				pMessage[0] = "confirm_join";
 				String hostIP = pMessage[1];
 				int port = Integer.parseInt(pMessage[2]);
 				String username = pMessage[3];
@@ -144,6 +148,7 @@ public class ClientLoop implements Runnable
 				else
 				{
 					System.out.println("ClientLoop: Unable to connect!");
+					client.receiveMessage(new String[] {"client", "join_failed"}); //tell Client that the join failed
 				}
 			}
 			else if(pMessage[0].equals("exit"))

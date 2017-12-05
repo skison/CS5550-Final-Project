@@ -25,8 +25,9 @@ public class ClientInputThread extends Thread{
 			try
 			{
 				System.out.println("ClientToServerThread: Hanging on reading String[] object...");
-				this.serverToClientQueue.push((String[]) this.ois.readObject());
-				System.out.println("ClientToServerThread: Successfully readObject for String[]...\nContect: ");
+				String[] newMessage = (String[]) this.ois.readObject();
+				this.serverToClientQueue.push(newMessage);
+				System.out.println("ClientToServerThread: Successfully readObject for String[]...\nContent: " + newMessage[0]);
 			}
 			catch(IOException e)
 			{
