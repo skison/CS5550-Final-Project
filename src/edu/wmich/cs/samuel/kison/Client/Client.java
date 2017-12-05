@@ -182,6 +182,13 @@ public class Client
 							clientQueue.push(actualMessage); //tell clientLoop where the ship is trying to be placed
 						}
 					}
+					else if(state.getCurrentState().equals("Playing_Game")) //user it attacking enemy
+					{
+						if (actualMessage[1].equals("false"))//you have to attack enemy's ships only
+						{
+							clientQueue.push(actualMessage); //tell clientLoop where the ship is being attacked
+						}
+					}
 					break;
 				case ("quit"):
 					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game")) //need to be mid-game to quit it

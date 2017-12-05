@@ -123,13 +123,13 @@ public class GUIBoard implements ActionListener
 	public BufferedImage rotateImage(BufferedImage inputImage, String rotation)
 	{
 		//System.out.println(">>ROTATING IMAGE " + rotation);
-		if(rotation == "Right" || rotation == "Left" || rotation == "Down")
+		if(rotation.equals("Right") || rotation.equals("Left") || rotation.equals("Down"))
 		{
 			AffineTransform tx = new AffineTransform();
 			tx.translate(inputImage.getHeight() / 2, inputImage.getWidth() / 2);
 			
-			if(rotation == "Right") {tx.rotate(Math.PI / 2);}
-			else if(rotation == "Down") {tx.rotate(Math.PI);}
+			if(rotation.equals("Right")) {tx.rotate(Math.PI / 2);}
+			else if(rotation.equals("Down")) {tx.rotate(Math.PI);}
 			else {tx.rotate((Math.PI / 2)*3);} //Left
 			
 			// first - center image at the origin so rotate works OK
