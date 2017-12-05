@@ -187,13 +187,13 @@ public class GUIFrame
 		JMenu ipPrompt = new JMenu("Host IP:"); //IP prompt
 		ipPrompt.setEnabled(false);
 		joinMenuBar.add(ipPrompt);
-		JTextField ipTextBox = new JTextField("", 10); //IP textbox
+		JTextField ipTextBox = new JTextField("localhost", 10); //IP textbox (localhost by default)
 		ipTextBox.setMaximumSize(ipTextBox.getPreferredSize());
 		joinMenuBar.add(ipTextBox);
 		JMenu portPrompt = new JMenu("Host Port #:"); //Port prompt
 		portPrompt.setEnabled(false);
 		joinMenuBar.add(portPrompt);
-		JTextField portTextBox = new JTextField("", 4); //Port textbox
+		JTextField portTextBox = new JTextField("2200", 4); //Port textbox (2200 by default)
 		portTextBox.setMaximumSize(portTextBox.getPreferredSize());
 		joinMenuBar.add(portTextBox);
 		JMenu divider = new JMenu("|"); //visual divider
@@ -222,7 +222,7 @@ public class GUIFrame
 		JMenu portPrompt = new JMenu("Server Port #:"); //Port prompt
 		portPrompt.setEnabled(false);
 		hostMenuBar.add(portPrompt);
-		JTextField portTextBox = new JTextField("", 4); //Port textbox
+		JTextField portTextBox = new JTextField("2200", 4); //Port textbox (2200 by default)
 		portTextBox.setMaximumSize(portTextBox.getPreferredSize());
 		hostMenuBar.add(portTextBox);
 		JMenu divider = new JMenu("|"); //visual divider

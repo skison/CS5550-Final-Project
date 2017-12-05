@@ -7,20 +7,27 @@ import java.net.Socket;
 
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
+/**
+ * This class has the ability to send a String[] to external <i>host</i> with <b>send(String[])</b>. The class always 
+ * reads a String[] from external Server and updates the shared MessageQueue defined in ClientLoop above.
+ * 
+ * @author alan_
+ *
+ */
 public class ClientTCP {
 	int port;
 	String hostIP;
 	String username;
 	Socket socket;
-	MessageQueue queue;
+	MessageQueue serverToClientQueue;
 	
 	ObjectInputStream ois;
 	ObjectOutputStream oos;
 	
-	public ClientTCP(int pPort, MessageQueue pQueue, String pIP, String pUsername) {
+	public ClientTCP(int pPort, String pIP, MessageQueue pQueue, String pUsername) {
 		this.port = pPort;
-		this.queue = pQueue;
 		this.hostIP = pIP;
+		this.serverToClientQueue = pQueue;
 		this.username = pUsername;
 	}
 	
@@ -60,7 +67,7 @@ public class ClientTCP {
 		System.out.println("ClientTCP: ois and oos have been initialized");
 		
 		//start thread
-		ClientToServerThread c = new ClientToServerThread(ois, queue);
+		ClientInputThread c = new ClientInputThread(ois, this.serverToClientQueue);
 		c.start();
 		System.out.println("ClientTCP: ClientToServerThread started");
 				
@@ -82,16 +89,16 @@ public class ClientTCP {
 	/**
 	 * Method that writes the pQueue to the Socket using ObjectOutputStream.writeObject
 	 * 
-	 * @param pQueue MessageQueue object
+	 * @param pQueue String[] object
 	 */
-	public void send(MessageQueue pQueue) {
+	public void send(String[] pMessage) {
 		try 
 		{
-			this.oos.writeObject(pQueue);
+			this.oos.writeObject(pMessage);
 		} 
 		catch (IOException e) 
 		{
-			System.out.println("ClientTCP: Exception caught during send(MessageQueue)");
+			System.out.println("ClientTCP: Exception caught during send(Message)");
 		}
 	}
 	
