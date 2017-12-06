@@ -46,6 +46,7 @@ public class Client
 				case ("exit"):
 					clientQueue.push(actualMessage); //let clientloop know that it is time to exit
 					break;
+					
 				case ("confirm_name"):
 					if (state.getCurrentState().equals("Start")) //only confirm name if in Start state
 					{
@@ -63,6 +64,7 @@ public class Client
 						}
 					}
 					break;
+					
 				case ("join"):
 					if (state.getCurrentState().equals("Start")) //only join game if in Start state
 					{
@@ -79,6 +81,7 @@ public class Client
 						}
 					}
 					break;
+					
 				case ("host"):
 					if (state.getCurrentState().equals("Start")) //only host game if in Start state
 					{
@@ -95,6 +98,7 @@ public class Client
 						}
 					}
 					break;
+					
 				case ("cancel_join"):
 					if (state.getCurrentState().equals("Join_Game_Preparation")) //can only cancel joining game if in this state
 					{
@@ -103,6 +107,7 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Please host or join a game!" });
 					}
 					break;
+					
 				case ("cancel_host"):
 					if (state.getCurrentState().equals("Host_Game_Preparation")) //can only cancel hosting game if in this state
 					{
@@ -111,6 +116,7 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Please host or join a game!" });
 					}
 					break;
+					
 				case ("confirm_join"):
 					if (state.getCurrentState().equals("Join_Game_Preparation")) //can only join game if in this state
 					{
@@ -135,6 +141,7 @@ public class Client
 						}
 					}
 					break;
+					
 				case ("retry_join"):
 					if (state.getCurrentState().equals("Loading_Game")) //can only retry loading if in loading state
 					{
@@ -146,6 +153,7 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Attempting to join game..." });
 					}
 					break;
+					
 				case ("confirm_host"):
 					if (state.getCurrentState().equals("Host_Game_Preparation")) //can only host game if in this state
 					{
@@ -165,6 +173,7 @@ public class Client
 						}
 					}
 					break;
+					
 				case ("cancel_load"):
 					if (state.getCurrentState().equals("Loading_Game")) //can only quit loading if in loading state
 					{
@@ -174,6 +183,7 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Please host or join a game!" });
 					}
 					break;
+					
 				case ("button"):
 					if (state.getCurrentState().equals("Setup_Game")) //User is placing ships during setup
 					{
@@ -190,14 +200,25 @@ public class Client
 						}
 					}
 					break;
+					
 				case ("quit"):
-					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game")) //need to be mid-game to quit it
+					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game") || state.getCurrentState().equals("End_Game")) //need to be in-game to quit it
 					{
 						state.setCurrentState("Start");
 						gui.updateGUI(new String[] { "start" });
+						gui.updateGUI(new String[] { "panel_update", "notify", "You have quit the game!" });
 						clientQueue.push(actualMessage); //tell clientLoop to quit game
 					}
 					break;
+					
+				case ("rematch"):
+					if (state.getCurrentState().equals("End_Game")) //need to be in end-game to request a rematch!
+					{
+						gui.updateGUI(new String[] { "panel_update", "notify", "Requesting rematch!" });
+						clientQueue.push(actualMessage); //tell clientLoop to try to rematch enemy
+					}
+					break;
+					
 				default:
 					break;
 			}
@@ -213,6 +234,7 @@ public class Client
 					gui.updateGUI(new String[] { "enable_join_bar" }); //enable the options on the join menu bar (because no longer trying to connect)
 					gui.updateGUI(new String[] { "panel_update", "notify", "Failed to join game!" });
 					break;
+					
 				case ("enemy_connected"):
 					if (state.getCurrentState().equals("Loading_Game"))//can only connect with enemy if in Loading_Game state
 					{
@@ -223,19 +245,22 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Place your ships!" });
 					}
 					break;
+					
 				case ("valid_placement"):
 					if (state.getCurrentState().equals("Setup_Game")) //can only setup ships during setup period
 					{
 						gui.getPanel().getBoard(true).placeShip(actualMessage[1], Integer.parseInt(actualMessage[3]),
 								Integer.parseInt(actualMessage[4]), actualMessage[2]);
 					}
+					break;
+					
 				case ("your_ships_placed"):
 					if (state.getCurrentState().equals("Setup_Game")) //must be during setup period
 					{
-						gui.updateGUI(new String[] { "panel_update", "notify",
-								"Waiting for enemy to finish placing ships..." }); //let player know that server is waiting for other player
+						gui.updateGUI(new String[] { "panel_update", "notify", "Waiting for enemy to finish placing ships..." }); //let player know that server is waiting for other player
 					}
 					break;
+					
 				case ("all_ships_placed"):
 					if (state.getCurrentState().equals("Setup_Game")) //must be during setup period
 					{
@@ -250,6 +275,95 @@ public class Client
 						}
 					}
 					break;
+					
+				case ("player_hit_success"):
+					if(state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
+					{
+						if (actualMessage[1].equals("true")) //player hit the enemy!
+						{
+							gui.updateGUI(new String[] { "panel_update", "notify", "You hit " + enemyName + "'s ship! Waiting for " + enemyName + " to take their turn..." });
+							gui.getPanel().getBoard(false).attackLocation(Integer.parseInt(actualMessage[2]), Integer.parseInt(actualMessage[3]), true);
+						}
+						else //player got hit by the enemy!
+						{
+							gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " hit your ship, now make your move!" });
+							gui.getPanel().getBoard(true).attackLocation(Integer.parseInt(actualMessage[2]), Integer.parseInt(actualMessage[3]), true);
+						}
+					}
+					break;
+					
+				case ("player_hit_failure"):
+					if(state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
+					{
+						if (actualMessage[1].equals("true")) //player missed the enemy!
+						{
+							gui.updateGUI(new String[] { "panel_update", "notify", "You missed! Waiting for " + enemyName + " to take their turn..." });
+							gui.getPanel().getBoard(false).attackLocation(Integer.parseInt(actualMessage[2]), Integer.parseInt(actualMessage[3]), false);
+						}
+						else //enemy missed the player!
+						{
+							gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " missed, now make your move!" });
+							gui.getPanel().getBoard(true).attackLocation(Integer.parseInt(actualMessage[2]), Integer.parseInt(actualMessage[3]), false);
+						}
+					}
+					break;
+					
+				case ("player_ship_sunk"):
+					if(state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
+					{
+						if (actualMessage[1].equals("true")) //player hit the enemy!
+						{
+							gui.updateGUI(new String[] { "panel_update", "notify", "You sunk " + enemyName + "'s " + actualMessage[2] + "! Waiting for " + enemyName + " to take their turn..." });
+						}
+						else //player got hit by the enemy!
+						{
+							gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " sunk your " + actualMessage[2] + ", now make your move!" });
+						}
+					}
+					break;
+					
+				case("game_over"):
+					if(state.getCurrentState().equals("Playing_Game")) //must be playing game to finish it
+					{
+						state.setCurrentState("End_Game"); //set to end state
+						gui.updateGUI(new String[] { "end" }); //update GUI's menu bar
+						
+						if (actualMessage[1].equals("true")) //player won!
+						{
+							gui.updateGUI(new String[] { "panel_update", "notify", "You defeated " + enemyName + "! Click the rematch button to play against them again, or quit the game!" });
+						}
+						else //enemy won
+						{
+							gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " defeated you! Click the rematch button to play against them again, or quit the game!" });
+						}
+					}
+					break;
+					
+				case("client_quit"):
+					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game") || state.getCurrentState().equals("End_Game")) //must be during the game
+					{
+						state.setCurrentState("Start"); //set state back to start
+						gui.updateGUI(new String[] { "start" }); //change gui's menubar to start bar
+						gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " has quit the game!" });
+					}
+					break;
+					
+				case("request_rematch"):
+					if(state.getCurrentState().equals("End_Game"))
+					{
+						gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " is requesting a rematch! Click 'Rematch' to accept!" });
+					}
+					break;
+					
+				case("rematch_accepted"):
+					if(state.getCurrentState().equals("End_Game")) //start a new game if in end game state
+					{
+						state.setCurrentState("Setup_Game");
+						gui.updateGUI(new String[] { "setup" });
+						gui.updateGUI(new String[] { "panel_update", "notify", "Place your ships!" });
+					}
+					break;
+					
 				default:
 					break;
 			}

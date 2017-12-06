@@ -126,7 +126,8 @@ public class ClientLoop implements Runnable
 					|| pMessage[0].equals("cancel_load") 
 					|| pMessage[0].equals("button") 
 					|| pMessage[0].equals("quit")
-					|| pMessage[0].equals("cancel_join"))
+					|| pMessage[0].equals("cancel_join")
+					|| pMessage[0].equals("rematch"))
 			{
 				System.out.println("ClientLoop: Pushing message to internalClientOutput... going up to ServerLoop...");
 				internalClientOutput.push(pMessage); //forward message to serverloop
@@ -158,7 +159,7 @@ public class ClientLoop implements Runnable
 		}
 		else //external server
 		{
-			if(pMessage[0].equals("button"))
+			if(pMessage[0].equals("button") || pMessage[0].equals("rematch"))
 			{
 				externalClientOutput.push(pMessage); //forward message to serverloop
 			}
@@ -167,10 +168,10 @@ public class ClientLoop implements Runnable
 			{
 				externalClientOutput.push(pMessage); //forward message to serverloop
 				connectedToExternalServer = false; //now send messages to the internal server
-				this.clientTCP.close();
+				this.clientTCP.close(); //shut down external server connection
 			}
 			else if(pMessage[0].equals("exit"))
-			{
+			{ 
 				return;//close this thread
 			}
 		}
@@ -192,9 +193,32 @@ public class ClientLoop implements Runnable
 		System.arraycopy(message, 0, connectMessage, 1, message.length);
 		connectMessage[0] = "client";
 
-		if(message[0].equals("enemy_connected") || message[0].equals("valid_placement") || message[0].equals("invalid_placement")
-				|| message[0].equals("all_ships_placed") || message[0].equals("your_ships_placed"))
+		if(message[0].equals("enemy_connected") 
+				|| message[0].equals("valid_placement") 
+				|| message[0].equals("invalid_placement")
+				|| message[0].equals("all_ships_placed") 
+				|| message[0].equals("your_ships_placed")
+				|| message[0].equals("player_hit_success")
+				|| message[0].equals("player_hit_failure")
+				|| message[0].equals("player_ship_sunk")
+				|| message[0].equals("game_over")
+				|| message[0].equals("request_rematch")
+				|| message[0].equals("rematch_accepted"))
 		{
+			client.receiveMessage(connectMessage);
+		}
+		else if(message[0].equals("client_quit"))
+		{
+			connectedToExternalServer = false; //now send messages to the internal server
+			try
+			{
+				this.clientTCP.close(); //shut down external server connection
+			}
+			catch(NullPointerException e)
+			{
+				System.out.println("ClientLoop: clientTCP has already been shut down");
+			}
+			
 			client.receiveMessage(connectMessage);
 		}
 	}

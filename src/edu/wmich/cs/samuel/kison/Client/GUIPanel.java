@@ -90,7 +90,6 @@ public class GUIPanel
 	//reset this panel and children
 	protected void reset()
 	{
-		notificationsLabel.setText("Please start or join a game!");
 		board1.reset();
 		board2.reset();
 	}

@@ -241,6 +241,17 @@ public class GUIBoard implements ActionListener
 			}
 		}
 	}
+	
+	/**
+	 * Used to set the image of a button to either the 'HitMarkerFail' or 'HitMarkerSuccess' at a specific location
+	 * @param x X coordinate of attack
+	 * @param y Y coordinate of attack
+	 * @param hit true if attack was successful, false if it failed
+	 */
+	public void attackLocation(int x, int y, boolean hit)
+	{
+		gameBoardSquares[x][y].setIcon(defaultScaleIcon(ImageHolder.getHitMarker(hit)));
+	}
 
 	@Override
 	public void actionPerformed(ActionEvent e)

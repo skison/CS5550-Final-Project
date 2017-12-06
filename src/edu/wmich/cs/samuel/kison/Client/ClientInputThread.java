@@ -7,7 +7,7 @@ import edu.wmich.cs.samuel.kison.MessageQueue;
 public class ClientInputThread extends Thread{
 	
 	ObjectInputStream ois;
-	MessageQueue serverToClientQueue;
+	MessageQueue queue;
 	
 	/**
 	 * Thread that will continuously read a String[] to the ClientTCP socket from external server and update the shared MessageQueue all the way up from ClientLoop.
@@ -16,7 +16,7 @@ public class ClientInputThread extends Thread{
 	 */
 	public ClientInputThread(ObjectInputStream pOis, MessageQueue pQueue) {
 		this.ois = pOis;
-		this.serverToClientQueue = pQueue;
+		this.queue = pQueue;
 	}
 	
 	public void run() {
@@ -26,12 +26,13 @@ public class ClientInputThread extends Thread{
 			{
 				System.out.println("ClientToServerThread: Hanging on reading String[] object...");
 				String[] newMessage = (String[]) this.ois.readObject();
-				this.serverToClientQueue.push(newMessage);
+				this.queue.push(newMessage);
 				System.out.println("ClientToServerThread: Successfully readObject for String[]...\nContent: " + newMessage[0]);
 			}
 			catch(IOException e)
 			{
 				System.out.println("ClientToServerThread: Exception on reading String[] object!!!!");
+				this.queue.push(new String[] {"client_quit"}); //let ClientLoop know that host has essentially 'quit' (disconnected)
 				break;
 			}
 			catch (ClassNotFoundException e2)

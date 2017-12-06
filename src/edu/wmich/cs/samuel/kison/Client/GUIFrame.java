@@ -142,6 +142,13 @@ public class GUIFrame
 		{
 			//System.out.println("GUI updating to setup state");
 			f.setJMenuBar(setupMenuBar);
+			guiPanel.reset();//Reset GUIPanel & its children
+			resetRotation();
+			f.pack();
+		}
+		else if (updateType[0].equals("end"))
+		{
+			f.setJMenuBar(endMenuBar);
 			f.pack();
 		}
 		else if (updateType[0].equals("panel_update")) //forward message to GUIPanel to update
@@ -381,10 +388,10 @@ public class GUIFrame
 	private void constructEndMenuBar()
 	{
 		endMenuBar = new JMenuBar();
-		JButton quitButton = new JButton("End Game"); //end button
+		JButton quitButton = new JButton("End Game"); //quit button
 		quitButton.addActionListener((ActionEvent event) ->
 		{
-			client.receiveMessage(new String[] { "gui", "end" });
+			client.receiveMessage(new String[] { "gui", "quit" });
 		});
 		endMenuBar.add(quitButton);
 		JMenu divider = new JMenu("|"); //visual divider
