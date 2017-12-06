@@ -32,16 +32,6 @@ public class Main
 		//Create client & server
 		Client client = new Client(clientOutput, serverOutput);
 		Server server = new Server(clientOutput, serverOutput);
-			
-		//InputQueue player1Input = new InputQueue();
-		//OutputQueue player1Output = new OutputQueue();
-		// Create game loop (don't start it though)
-		
+
 	}
-	
-	/*public static void safeClose()
-	{
-		gameLoopThread.interrupt();
-		System.exit(0);
-	}*/
 }
