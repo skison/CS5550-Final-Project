@@ -26,6 +26,8 @@ public class ServerLoop extends Thread
 	private ServerTCP serverTCP;
 	private ClientTCP clientTCP;
 
+	boolean player1Rematch = false; //when both of these are true, start up a new match for the connected players!
+	boolean player2Rematch = false; //^
 	
 	private Thread serverTCPThread;
 	
@@ -200,13 +202,21 @@ public class ServerLoop extends Thread
 					break;
 
 				case ("quit"):
-					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Player1_Turn")
-							|| state.getCurrentState().equals("Player2_Turn"))//can only quit if mid-game
+					if (state.getCurrentState().equals("Setup_Game") 
+							|| state.getCurrentState().equals("Player1_Turn")
+							|| state.getCurrentState().equals("Player2_Turn")
+							|| state.getCurrentState().equals("End_Game"))//can only quit if in-game
 					{
-						player1Output.push(new String[] { "client_quit", data.getPlayer2Name() }); //notify player(s) that this player has disconnected!
-						player2Output.push(new String[] { "client_quit", data.getPlayer2Name() }); //notify player(s) that this player has disconnected!
+						player1Output.push(new String[] { "client_quit"}); //notify player2 that they have disconnected!
 						state.setCurrentState("Closed"); //close game
 						this.serverTCP.close();
+					}
+					break;
+					
+				case ("rematch"):
+					if(state.getCurrentState().equals("End_Game")) //need to be in end game to rematch
+					{
+						rematchGame(true);
 					}
 					break;
 
@@ -254,13 +264,21 @@ public class ServerLoop extends Thread
 					break;
 
 				case ("quit"):
-					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Player1_Turn")
-							|| state.getCurrentState().equals("Player2_Turn"))//can only quit if mid-game
+					if (state.getCurrentState().equals("Setup_Game") 
+							|| state.getCurrentState().equals("Player1_Turn")
+							|| state.getCurrentState().equals("Player2_Turn")
+							|| state.getCurrentState().equals("End_Game"))//can only quit if in-game
 					{
-						player1Output.push(new String[] { "client_quit", data.getPlayer2Name() }); //notify player(s) that this player has disconnected!
-						player2Output.push(new String[] { "client_quit", data.getPlayer2Name() }); //notify player(s) that this player has disconnected!
-						state.setCurrentState("Closed"); //close game'
+						player1Output.push(new String[] { "client_quit"}); //notify player1 that this player2 has disconnected!
+						state.setCurrentState("Closed"); //close game
 						this.serverTCP.close();
+					}
+					break;
+					
+				case ("rematch"):
+					if(state.getCurrentState().equals("End_Game")) //need to be in end game to rematch
+					{
+						rematchGame(false);
 					}
 					break;
 
@@ -282,45 +300,81 @@ public class ServerLoop extends Thread
 		int xCord = Integer.parseInt(message[2]);
 		int yCord = Integer.parseInt(message[3]);
 		
-		if(!data.hasBeenAttacked(xCord, yCord, player)) //new attack location; invalid otherwise
+		if(!data.hasBeenAttacked(xCord, yCord, !player)) //new attack location; invalid otherwise
 		{
 			if(data.attack(xCord, yCord, !player)) //hit enemy!
 			{
 				if(player)//player 1
 				{
-					player1Output.push(new String[] { "player1_hit_success", message[2], message[3]}); //notify player1 that they hit the enemy at this location
-					player2Output.push(new String[] { "player1_hit_success", message[2], message[3]}); //notify player2 that they were hit
+					player1Output.push(new String[] { "player_hit_success", "true", message[2], message[3]}); //notify player1 that they hit the enemy at this location
+					player2Output.push(new String[] { "player_hit_success", "false", message[2], message[3]}); //notify player2 that they were hit
 				}
 				else//player 2
 				{
-					player1Output.push(new String[] { "player2_hit_success", message[2], message[3]}); //notify player1 that they were hit
-					player2Output.push(new String[] { "player2_hit_success", message[2], message[3]}); //notify player2 that they hit the enemy at this location
+					player1Output.push(new String[] { "player_hit_success", "false", message[2], message[3]}); //notify player1 that they were hit
+					player2Output.push(new String[] { "player_hit_success", "true", message[2], message[3]}); //notify player2 that they hit the enemy at this location
+				}
+				
+				String newlySunkShip = data.checkForNewSunkShip(!player);
+						
+				if(!newlySunkShip.equals("")) //check if a ship was just destroyed (not blank); if so, notify the players
+				{
+					if(player)//player 1
+					{
+						player1Output.push(new String[] { "player_ship_sunk", "true", newlySunkShip}); //notify player1 that they sunk an enemy's ship
+						player2Output.push(new String[] { "player_ship_sunk", "false", newlySunkShip}); //notify player2 that their ship was sunk
+					}
+					else//player 2
+					{
+						player1Output.push(new String[] { "player_ship_sunk", "false", newlySunkShip}); //notify player1 that their ship was sunk
+						player2Output.push(new String[] { "player_ship_sunk", "true", newlySunkShip}); //notify player2 that they sunk an enemy's ship
+					}
+					
+					//Now, finally, check if ALL ships have been sunk of the oposite player; if so, game can end
+					if(data.isAllSunk(!player))
+					{
+						state.setCurrentState("End_Game"); //set state to end state
+						
+						if(player)//player 1
+						{
+							player1Output.push(new String[] { "game_over", "true"}); //notify player1 that they won
+							player2Output.push(new String[] { "game_over", "false"}); //notify player2 that they lost
+						}
+						else//player 2
+						{
+							player1Output.push(new String[] { "game_over", "false"}); //notify player1 that they lost
+							player2Output.push(new String[] { "game_over", "true"}); //notify player2 that they won
+						}
+					}
 				}
 			}
 			else //missed!
 			{
 				if(player)//player 1
 				{
-					player1Output.push(new String[] { "player1_hit_failure", message[2], message[3]}); //notify player1 that they didn't hit the enemy at this location
-					player2Output.push(new String[] { "player1_hit_failure", message[2], message[3]}); //notify player2 that they weren't hit
+					player1Output.push(new String[] { "player_hit_failure", "true", message[2], message[3]}); //notify player1 that they didn't hit the enemy at this location
+					player2Output.push(new String[] { "player_hit_failure", "false", message[2], message[3]}); //notify player2 that they weren't hit
 				}
 				else//player 2
 				{
-					player1Output.push(new String[] { "player2_hit_failure", message[2], message[3]}); //notify player1 that they weren't hit
-					player2Output.push(new String[] { "player2_hit_failure", message[2], message[3]}); //notify player2 that they didn't hit the enemy at this location
+					player1Output.push(new String[] { "player_hit_failure", "false", message[2], message[3]}); //notify player1 that they weren't hit
+					player2Output.push(new String[] { "player_hit_failure", "true", message[2], message[3]}); //notify player2 that they didn't hit the enemy at this location
 				}
 			}
 			
-			if(player)
+			if(!state.getCurrentState().equals("End_Game")) //toggle player turn if not end of game
 			{
-				state.setCurrentState("Player2_Turn"); //set to player2's turn if it was player1's
+				if(player)
+				{
+					state.setCurrentState("Player2_Turn"); //set to player2's turn if it was player1's
+				}
+				else
+				{
+					state.setCurrentState("Player1_Turn"); //set to player1's turn if it was player2's
+				}
 			}
-			else
-			{
-				state.setCurrentState("Player1_Turn"); //set to player1's turn if it was player2's
-			}
-		}
-		
+			
+		}		
 		
 	}
 	
@@ -392,6 +446,46 @@ public class ServerLoop extends Thread
 				{
 					player2Output.push(new String[] { "invalid_placement", currentShip }); //notify player of incorrect placement
 				}
+			}
+		}
+	}
+	
+	
+	/**
+	 * Called when a player wants a rematch! Used to start up a new round if both players want to
+	 * @param player True = player1, False = player2
+	 */
+	private void rematchGame(boolean player)
+	{
+		if(player)
+		{
+			this.player1Rematch = true;
+		}
+		else
+		{
+			this.player2Rematch = true;
+		}
+		
+		if(this.player1Rematch && this.player2Rematch) //both players want a rematch
+		{
+			state.setCurrentState("Setup_Game");
+			data.rematch();
+			
+			this.player1Output.push(new String[] { "rematch_accepted" });
+			this.player2Output.push(new String[] { "rematch_accepted" });
+			
+			this.player1Rematch = false; //reset these booleans
+			this.player2Rematch = false; //^
+		}
+		else //only 1 player wants a rematch so far, so notify the other player
+		{
+			if(player) //came from player 1, so notify player 2
+			{
+				player2Output.push(new String[] {"request_rematch"});
+			}
+			else//came from player 2, so notify player 1
+			{
+				player1Output.push(new String[] {"request_rematch"});
 			}
 		}
 	}

@@ -58,6 +58,7 @@ public class ServerInputThread extends Thread {
 			catch (IOException e) 
 			{
 				System.out.println("ServerToClientThread: Exception on reading String[] object!!!!");
+				this.queue.push(new String[] {"quit"}); //let ServerLoop know that client has essentially 'quit' (disconnected)
 				break;
 			}
 			catch (ClassNotFoundException e2)

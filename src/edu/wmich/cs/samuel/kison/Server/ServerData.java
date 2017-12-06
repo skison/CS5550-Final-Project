@@ -91,6 +91,38 @@ public class ServerData
 
 		return hitShip;
 	}
+	
+	/**
+	 * Used to check for a newly destroyed ship
+	 * 
+	 * @param player true to check player1's ships, false to check player2's ships
+	 * @return String name of newly sunk ship of player, or empty ("") if none
+	 */
+	public String checkForNewSunkShip(boolean player)
+	{
+		ArrayList<Ship> currentShips;
+		String retShip = "";
+		
+		if(player)
+		{
+			currentShips = player1Ships;
+		}
+		else
+		{
+			currentShips = player2Ships;
+		}
+		
+		for (Ship i : currentShips)
+		{
+			if(i.checkIfNewlySunk()) //this ship is newly sunk!
+			{
+				retShip = i.getName();
+				break; //no need to continue this pointless loop
+			}
+		}
+		
+		return retShip;
+	}
 
 	//Reset everything
 	public void reset()
@@ -101,6 +133,17 @@ public class ServerData
 		player2BoardHits = new boolean[10][10]; //^
 		player1Name = ""; //player1's name
 		player2Name = ""; //player2's name
+		player1ShipCount = 0;
+		player2ShipCount = 0;
+	}
+	
+	//Similar to reset(), but used when rematching a player
+	public void rematch()
+	{
+		player1Ships = new ArrayList<Ship>(); //all of player1's Ship objects
+		player2Ships = new ArrayList<Ship>(); //^ for player2
+		player1BoardHits = new boolean[10][10]; //automatically initialized to false
+		player2BoardHits = new boolean[10][10]; //^
 		player1ShipCount = 0;
 		player2ShipCount = 0;
 	}
@@ -145,7 +188,7 @@ public class ServerData
 		//Now check each coordinate pair of the ship to see if it overlaps the ships already on the board
 		for (Ship i : currentShips)
 		{
-			for (int j = 0; j < testShip.length; j++) //loop through each coordinate pair in the ship
+			for (int j = 0; j < testShip.getLength(); j++) //loop through each coordinate pair in the ship
 			{
 				if (i.occupiesCoords(testShip.getXatIndex(j), testShip.getYatIndex(j)) > -1)
 				{
@@ -248,6 +291,38 @@ public class ServerData
 		}
 		return retLength;
 	}
+	
+	/**
+	 * Used to check if ALL of a player's ships have been sunk
+	 * @param player true for player1, false for player2
+	 * @return true if ALL ships are sunk, false otherwise
+	 */
+	public boolean isAllSunk(boolean player)
+	{
+		ArrayList<Ship> currentShips;
+		boolean retBool = true; //start true, turn to false if any ships aren't sunk
+		
+		if(player)
+		{
+			currentShips = player1Ships;
+		}
+		else
+		{
+			currentShips = player2Ships;
+		}
+		
+		for (Ship i : currentShips) //go through all ships
+		{
+			if(!i.isSunk()) //if this ship isn't sunk
+			{
+				retBool = false;
+				break; //no need to continue this pointless loop
+			}
+		}
+		
+		return retBool;
+	}
+	
 
 	//Getters & Setters
 

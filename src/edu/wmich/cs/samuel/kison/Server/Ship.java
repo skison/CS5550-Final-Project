@@ -13,13 +13,14 @@ package edu.wmich.cs.samuel.kison.Server;
 
 public class Ship
 {
-	String name;
-	String rotation;
-	int headX;
-	int headY;
-	int length;
-	boolean[] hits;
-	boolean sunk;
+	private String name;
+	private String rotation;
+	private int headX;
+	private int headY;
+	private int length;
+	private boolean[] hits;
+	private boolean sunk = false;
+	private boolean notifiedSunk = false; //Is set to true when checkIfNewlySunk() is called AFTER the ship has sunk
 
 	public Ship(String _name, String _rotation, int _headX, int _headY, int _length)
 	{
@@ -30,9 +31,30 @@ public class Ship
 		length = _length;
 
 		hits = new boolean[length]; //will initialize to all false
-		sunk = false;
-		
-		//System.out.println(">>>New Ship! Name: " + name + ", Rotation: " + rotation + ", Head X: " + headX + ", Head Y: " + headY + ", Length: " + length);
+	}
+	
+	/**
+	 * Used to check if this ship has just been sunk
+	 * @return true if ship is sunk AND this is the first time checking
+	 */
+	public boolean checkIfNewlySunk()
+	{
+		if(sunk) //must be sunk
+		{
+			if(notifiedSunk) //has already notified that this ship is sunk, so it's not 'newly' sunk
+			{
+				return false;
+			}
+			else //ship is newly sunk
+			{
+				notifiedSunk = true;
+				return true;
+			}
+		}
+		else //hasn't sunk yet
+		{
+			return false;
+		}
 	}
 
 	/*
