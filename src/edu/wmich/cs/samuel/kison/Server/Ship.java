@@ -130,8 +130,6 @@ public class Ship
 	{
 		int backX = headX;
 		
-		//System.out.println("rotation in getBackX: " + rotation);
-
 		switch (rotation)
 		{
 			case ("Left"):
@@ -151,8 +149,6 @@ public class Ship
 	{
 		int backY = headY;
 		
-		//System.out.println("rotation in getBackY: " + rotation);
-
 		switch (rotation)
 		{
 			case ("Down"):

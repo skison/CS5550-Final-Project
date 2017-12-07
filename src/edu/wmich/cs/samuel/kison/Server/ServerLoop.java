@@ -2,6 +2,7 @@ package edu.wmich.cs.samuel.kison.Server;
 
 import java.io.IOException;
 
+import edu.wmich.cs.samuel.kison.Main;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 import edu.wmich.cs.samuel.kison.Client.ClientTCP;
 
@@ -44,7 +45,7 @@ public class ServerLoop extends Thread
 	@Override
 	public void run()
 	{
-		System.out.println("Server started!");
+		if(Main.debug)System.out.println("Server started!");
 
 		// player1Input.empty(); //empty input queue
 		// player1Output.empty(); //empty output queue
@@ -66,28 +67,11 @@ public class ServerLoop extends Thread
 
 			if (deltaU >= 1)
 			{
-				//System.out.println("Server running! " + totalTicks);
 				checkInput();
 				sendOutput();
 				ticks++;
 				totalTicks++;
 				deltaU--;
-				// System.out.println("Loop ran at " + deltaU);
-			}
-
-			/*
-			 * if (deltaF >= 1) { render(); frames++; deltaF--; }
-			 */
-
-			if (System.currentTimeMillis() - timer > 1000)
-			{
-				if (RENDER_TIME)
-				{
-					System.out.println(String.format("UPS: %s, FPS: %s", ticks, frames));
-				}
-				frames = 0;
-				ticks = 0;
-				timer += 1000;
 			}
 		}
 	}
@@ -96,16 +80,9 @@ public class ServerLoop extends Thread
 	{
 		if (!player1Input.isEmpty()) //if there is new input to be had from player 1
 		{
-			//System.out.println("New Input from client 1 to server!");
 			while (!player1Input.isEmpty())
 			{
 				interpretPlayerMessage(true, player1Input.pop());
-				/*
-				 * InputObject tempIn = player1Input.pop();
-				 * System.out.println(tempIn.toString()); OutputObject tempOut = new
-				 * OutputObject("confirm", "Destroyer", tempIn.getRow(), tempIn.getColumn());
-				 * player1Output.push(tempOut);
-				 */
 			}
 		}
 		if (!player2Input.isEmpty()) //if there is new input to be had from player 2
@@ -125,18 +102,21 @@ public class ServerLoop extends Thread
 
 		if (!player2Output.isEmpty())
 		{
-			System.out.println("ServerLoop: New Output to send to external client(Player 2)!");
+			if(Main.debug)System.out.println("ServerLoop: New Output to send to external client(Player 2)!");
 			while (!player2Output.isEmpty())
 			{
-				System.out.print("ServerLoop: Contents after pop inside sendOutput(): ");
 				String[] message = this.player2Output.pop();
 
-				for (int i = 0; i < message.length; i++)
+				if(Main.debug)
 				{
-					System.out.print(i + ":" + message[i] + " ");
+					System.out.print("ServerLoop: Contents after pop inside sendOutput(): ");
+					for (int i = 0; i < message.length; i++)
+					{
+						System.out.print(i + ":" + message[i] + " ");
+					}
+					System.out.println(".");
 				}
-				System.out.println(".");
-
+				
 				this.serverTCP.send(message);
 			}
 		}
@@ -154,13 +134,16 @@ public class ServerLoop extends Thread
 	{
 		if (player)//Player 1
 		{
-			System.out.print("ServerLoop: New Input from player 1:");
-			for (int i = 0; i < message.length; i++)
+			if(Main.debug)
 			{
-				System.out.print(i + ":" + message[i] + " ");
+				System.out.print("ServerLoop: New Input from player 1:");
+				for (int i = 0; i < message.length; i++)
+				{
+					System.out.print(i + ":" + message[i] + " ");
+				}
+				System.out.println(".");
 			}
-			System.out.println(".");
-
+			
 			switch (message[0])
 			{
 				case ("confirm_host"): //Time for the server to officially start up if closed
@@ -170,7 +153,7 @@ public class ServerLoop extends Thread
 						data.reset();
 						data.setPlayer1Name(message[2]);
 
-						System.out.println("ServerLoop: About to create & run serverTCP!");
+						if(Main.debug)System.out.println("ServerLoop: About to create & run serverTCP!");
 						
 						//get port number! that is on message[1]
 						int port = Integer.parseInt(message[1]);
@@ -185,7 +168,7 @@ public class ServerLoop extends Thread
 					{
 						state.setCurrentState("Closed");
 
-						System.out.println("ServerLoop: About to exit server socket... closing serverTCP serverSocket...");
+						if(Main.debug)System.out.println("ServerLoop: About to exit server socket... closing serverTCP serverSocket...");
 						this.serverTCP.close(); //close connection
 					}
 					break;
@@ -227,12 +210,15 @@ public class ServerLoop extends Thread
 		}
 		else //Player 2
 		{
-			System.out.print("ServerLoop: New Input from player 2:");
-			for (int i = 0; i < message.length; i++)
+			if(Main.debug)
 			{
-				System.out.print(i + ":" + message[i] + " ");
+				System.out.print("ServerLoop: New Input from player 2:");
+				for (int i = 0; i < message.length; i++)
+				{
+					System.out.print(i + ":" + message[i] + " ");
+				}
+				System.out.println(".");
 			}
-			System.out.println(".");
 
 			switch (message[0])
 			{

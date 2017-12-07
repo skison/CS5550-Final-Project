@@ -170,8 +170,6 @@ public class ServerData
 		int frontX = testShip.getHeadX();
 		int frontY = testShip.getHeadY();
 		
-		//System.out.println("Ship headX: " + frontX + ", headY: " + frontY + ", backX: " + backX + ", backY: " + backY);
-
 		//Determine whether the X coords are the same, or if it's the Y coords (true = X, false = Y)
 		boolean sameCoords = false;
 		if (backX == frontX)

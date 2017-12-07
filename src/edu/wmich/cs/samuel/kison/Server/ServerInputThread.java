@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import edu.wmich.cs.samuel.kison.Main;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
 /**
@@ -25,19 +26,19 @@ public class ServerInputThread extends Thread {
 	public ServerInputThread(Socket pSocket, MessageQueue pQueue) {
 		this.socket = pSocket;
 		this.queue = pQueue;
-		System.out.println("ServerToClientThread: Thread is about to create Object Input and Output Streams (ois/oos)...");
+		if(Main.debug)System.out.println("ServerToClientThread: Thread is about to create Object Input and Output Streams (ois/oos)...");
 		try
 		{
 			this.oos = new ObjectOutputStream(pSocket.getOutputStream());
 			this.ois = new ObjectInputStream(pSocket.getInputStream());
 			
-			System.out.println("ServerToClientThread: Hanging on reading username from Client...");
+			if(Main.debug)System.out.println("ServerToClientThread: Hanging on reading username from Client...");
 			this.username = (String) ois.readObject();
-			System.out.println("ServerToClientThread: " + this.username + " has been connected!");
+			if(Main.debug)System.out.println("ServerToClientThread: " + this.username + " has been connected!");
 		} 
 		catch (IOException e) 
 		{
-			System.out.println("ServerToClientThread: Exception while creating ois/oos and reading Username");
+			if(Main.debug)System.out.println("ServerToClientThread: Exception while creating ois/oos and reading Username");
 			return;
 		}
 		catch (ClassNotFoundException e2) { // not much to do here.... will almost never happen
@@ -51,13 +52,13 @@ public class ServerInputThread extends Thread {
 		{
 			try
 			{
-				System.out.println("ServerToClientThread: Hanging at readObject for String[]...");
+				if(Main.debug)System.out.println("ServerToClientThread: Hanging at readObject for String[]...");
 				this.queue.push((String[]) ois.readObject());
-				System.out.println("ServerToClientThread: Successfully readObject for String[]...\nContents: " + this.queue.toString());
+				if(Main.debug)System.out.println("ServerToClientThread: Successfully readObject for String[]...\nContents: " + this.queue.toString());
 			}
 			catch (IOException e) 
 			{
-				System.out.println("ServerToClientThread: Exception on reading String[] object!!!!");
+				if(Main.debug)System.out.println("ServerToClientThread: Exception on reading String[] object!!!!");
 				this.queue.push(new String[] {"quit"}); //let ServerLoop know that client has essentially 'quit' (disconnected)
 				break;
 			}

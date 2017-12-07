@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import edu.wmich.cs.samuel.kison.Main;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
 /**
@@ -35,7 +36,7 @@ public class ServerTCP implements Runnable
 
 	public void close()
 	{
-		System.out.println("ServerTCP: closing everything");
+		if(Main.debug)System.out.println("ServerTCP: closing everything");
 		try
 		{
 
@@ -46,11 +47,11 @@ public class ServerTCP implements Runnable
 		}
 		catch (IOException e)
 		{
-			System.out.println("ServerTCP: IOException on stop()...");
+			if(Main.debug)System.out.println("ServerTCP: IOException on stop()...");
 		}
 		catch (NullPointerException e)
 		{
-			System.out.println("ServerTCP: Unable to close socket/threads, must not have been open");
+			if(Main.debug)System.out.println("ServerTCP: Unable to close socket/threads, must not have been open");
 		}
 	}
 
@@ -63,7 +64,7 @@ public class ServerTCP implements Runnable
 		}
 		catch (IOException e)
 		{
-			System.out.println("ServerTCP: Exception during send(String[]): " + e + "\n");
+			if(Main.debug)System.out.println("ServerTCP: Exception during send(String[]): " + e + "\n");
 		}
 	}
 
@@ -74,17 +75,17 @@ public class ServerTCP implements Runnable
 		try
 		{
 			this.serverSocket = new ServerSocket(this.port);
-			System.out.println("ServerTCP: Waiting for Client to connect on port: " + this.port);
+			if(Main.debug)System.out.println("ServerTCP: Waiting for Client to connect on port: " + this.port);
 			this.socket = serverSocket.accept();
 
-			System.out.println("ServerTCP: Client has connected!");
+			if(Main.debug)System.out.println("ServerTCP: Client has connected!");
 			this.serverThread = new ServerInputThread(socket, this.queue);
 			serverThread.start();
 		}
 		// could not establish connection
 		catch (IOException e)
 		{
-			System.out.println("ServerTCP: Could not establish connection on new ServerSocket: " + e + "\n");
+			if(Main.debug)System.out.println("ServerTCP: Could not establish connection on new ServerSocket: " + e + "\n");
 		}
 	}
 
