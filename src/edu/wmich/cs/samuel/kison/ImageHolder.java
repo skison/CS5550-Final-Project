@@ -1,20 +1,28 @@
 package edu.wmich.cs.samuel.kison;
 
-import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
+/**
+ * This class is a handler that controls all of the images used in the application. Any time any object needs an image, it can make a call to one of this
+ * class's static methods. Everything is initialized by Main.java.
+ * 
+ * @author Samuel Kison
+ *
+ */
 public class ImageHolder
 {
 	private static BufferedImage[] allImgs;
 
+	/**
+	 * Initialize all images to be used
+	 */
 	public static void loadImages()
 	{
 		/*26 images in total: 2 Destroyer segments, 3 Submarine segments, 3 Cruiser segments, 
@@ -58,11 +66,25 @@ public class ImageHolder
 		}
 	}
 
+	/**
+	 * Get any image held by this class
+	 * 
+	 * @param index
+	 *            index of the image to get within the allImgs array
+	 * @return BufferedImage the image pointed to by index
+	 */
 	public static BufferedImage getImage(int index)
 	{
 		return allImgs[index];
 	}
 
+	/**
+	 * Get a segment of the Destroyer ship
+	 * 
+	 * @param in
+	 *            index of the Destroyer (0 = head)
+	 * @return BufferedImage image for the specified index of the ship
+	 */
 	public static BufferedImage getDestroyer(int in)
 	{
 		int index = 21; //index of the full Destroyer
@@ -80,6 +102,13 @@ public class ImageHolder
 		return allImgs[index];
 	}
 
+	/**
+	 * Get a segment of the Submarine ship
+	 * 
+	 * @param in
+	 *            index of the Submarine (0 = head)
+	 * @return BufferedImage image for the specified index of the ship
+	 */
 	public static BufferedImage getSubmarine(int in)
 	{
 		int index = 22; //index of the full Submarine
@@ -100,6 +129,13 @@ public class ImageHolder
 		return allImgs[index];
 	}
 
+	/**
+	 * Get a segment of the Cruiser ship
+	 * 
+	 * @param in
+	 *            index of the Cruiser (0 = head)
+	 * @return BufferedImage image for the specified index of the ship
+	 */
 	public static BufferedImage getCruiser(int in)
 	{
 		int index = 23; //index of the full Cruiser
@@ -120,6 +156,13 @@ public class ImageHolder
 		return allImgs[index];
 	}
 
+	/**
+	 * Get a segment of the Battleship ship
+	 * 
+	 * @param in
+	 *            index of the Battleship (0 = head)
+	 * @return BufferedImage image for the specified index of the ship
+	 */
 	public static BufferedImage getBattleship(int in)
 	{
 		int index = 24; //index of the full Battleship
@@ -143,6 +186,13 @@ public class ImageHolder
 		return allImgs[index];
 	}
 
+	/**
+	 * Get a segment of the Carrier ship
+	 * 
+	 * @param in
+	 *            index of the Carrier (0 = head)
+	 * @return BufferedImage image for the specified index of the ship
+	 */
 	public static BufferedImage getCarrier(int in)
 	{
 		int index = 25; //index of the full Carrier
@@ -169,34 +219,62 @@ public class ImageHolder
 		return allImgs[index];
 	}
 
+	/**
+	 * Get the water tile
+	 * 
+	 * @return BufferedImage water tile image
+	 */
 	public static BufferedImage getWaterTile()
 	{
 		return allImgs[17];
 	}
 
+	/**
+	 * Get the broken ship image
+	 * 
+	 * @return BufferedImage broken ship image
+	 */
 	public static BufferedImage getBrokenShip()
 	{
 		return allImgs[18];
 	}
-	
+
+	/**
+	 * Get the game icon
+	 * 
+	 * @return BufferedImage game icon
+	 */
 	public static BufferedImage getGameIcon()
 	{
 		return allImgs[26];
 	}
 
+	/**
+	 * Get a hitmarker image
+	 * 
+	 * @param hit
+	 *            true = successful hit, false = failed hit
+	 * @return BufferedImage the hitmarker specified by 'hit'
+	 */
 	public static BufferedImage getHitMarker(boolean hit)
 	{
-		if (hit)
+		if (hit)//successful hit
 		{
 			return allImgs[19];
-		} //successful hit
-		else
+		}
+		else//no hit
 		{
 			return allImgs[20];
-		} //no hit
+		}
 	}
 
-	//Take in a normal square image and return a 64*64 icon
+	/**
+	 * Take in a normal square image and return one that is scaled to the static size "Main.squareSize"
+	 * 
+	 * @param img
+	 *            Original square image
+	 * @return ImageIcon the resized image
+	 */
 	public static ImageIcon defaultScaleIcon(Image img)
 	{
 		Image newImg = img.getScaledInstance(Main.squareSize, Main.squareSize, java.awt.Image.SCALE_FAST);
@@ -204,8 +282,16 @@ public class ImageHolder
 		return new ImageIcon(newImg);
 	}
 
-	//rotation = direction the ship should face (Up, Down, Left, Right)
-	//code taken from https://stackoverflow.com/questions/9749121/java-image-rotation-with-affinetransform-outputs-black-image-but-works-well-whe
+	/**
+	 * Rotate any given square image to any cardinal direction <br>
+	 * Code reference: https://stackoverflow.com/questions/9749121/java-image-rotation-with-affinetransform-outputs-black-image-but-works-well-whe
+	 * 
+	 * @param inputImage
+	 *            the original, upright image
+	 * @param rotation
+	 *            'Left', 'Right', 'Up', or 'Down'- specifies the new rotation of the image
+	 * @return BufferedImage the newly rotated image
+	 */
 	public static BufferedImage rotateImage(BufferedImage inputImage, String rotation)
 	{
 		if (rotation.equals("Right") || rotation.equals("Left") || rotation.equals("Down"))
@@ -221,10 +307,10 @@ public class ImageHolder
 			{
 				tx.rotate(Math.PI);
 			}
-			else
+			else//Left
 			{
 				tx.rotate((Math.PI / 2) * 3);
-			} //Left
+			}
 
 			// first - center image at the origin so rotate works OK
 			tx.translate(-inputImage.getWidth() / 2, -inputImage.getHeight() / 2);
