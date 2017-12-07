@@ -3,9 +3,6 @@ package edu.wmich.cs.samuel.kison.Server;
 import edu.wmich.cs.samuel.kison.StateList;
 
 /*
- * This class is used to keep track of the current 'state' the Server is in. This is necessary to make sure
- * that certain actions only take place when they are meant to.
- * 
  * Simplified diagram of Server states:
  * 
  * Closed
@@ -28,12 +25,19 @@ import edu.wmich.cs.samuel.kison.StateList;
  * Back to Setup_Game if chose 'rematch', otherwise back to Closed
  */
 
+/**
+ * This class is used to keep track of the current 'state' the Server is in. This is necessary to make sure that certain actions only take place when they are
+ * meant to.
+ * 
+ * @author Samuel Kison
+ *
+ */
 public class ServerState extends StateList
 {
 	public ServerState()
 	{
 		super();//call StateList constructor
-		
+
 		//Set up Nodes as shown above
 		stateList.add("Closed");
 		stateList.add("Loading_Game");

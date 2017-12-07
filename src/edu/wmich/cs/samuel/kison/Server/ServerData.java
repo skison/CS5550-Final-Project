@@ -3,11 +3,12 @@ package edu.wmich.cs.samuel.kison.Server;
 import java.util.ArrayList;
 
 /**
- * This class stores Ship instances for every ship on the board for both players,
- * as well as a 2-dimensional boolean array for each player keeping track of which
- * locations have been hit.
+ * This class can be considered to be the main 'M' of the MVC structure of the server. It Ship instances for every ship on the board for both players, as well
+ * as a 2-dimensional boolean array for each player keeping track of which locations have been hit. It also keeps track of both player's names
+ * 
+ * @author Samuel Kison
+ *
  */
-
 public class ServerData
 {
 	private ArrayList<Ship> player1Ships;//all of player1's Ship objects
@@ -19,14 +20,21 @@ public class ServerData
 	private int player1ShipCount; //number of ships placed by player1
 	private int player2ShipCount; //^ for player2
 
+	/**
+	 * Initialize the ServerData object
+	 */
 	public ServerData()
 	{
 		reset(); //initialize everything
 	}
 
-	/*
+	/**
 	 * Add a new ship to one of the player's ArrayLists.
-	 * If player == true, player1. Else, player 2
+	 * 
+	 * @param newShip
+	 *            the new ship to be added
+	 * @param player
+	 *            true = player1, false = player2
 	 */
 	public void addShip(Ship newShip, boolean player)
 	{
@@ -40,8 +48,16 @@ public class ServerData
 		}
 	}
 
-	/*
-	 * Used to check if a player's board has already been attacked at a specific spot (essentially the same as the getters below)
+	/**
+	 * Used to check if a player's board has already been attacked at a specific spot (similar to the getters of this class)
+	 * 
+	 * @param x
+	 *            X coordinate that is trying to be attacked
+	 * @param y
+	 *            Y coordinate that is trying to be attacked
+	 * @param player
+	 *            true = player1, false = player2
+	 * @return true if that player's spot on the board has been attacked, false otherwise
 	 */
 	public boolean hasBeenAttacked(int x, int y, boolean player)
 	{
@@ -58,9 +74,12 @@ public class ServerData
 	/**
 	 * Used to attack a player's board at a specific spot
 	 * 
-	 * @param x x coordinate
-	 * @param y y coordinate
-	 * @param player PLAYER YOU ARE ATTACKING!!! (true = player 1, false = player 2)
+	 * @param x
+	 *            x coordinate
+	 * @param y
+	 *            y coordinate
+	 * @param player
+	 *            PLAYER YOU ARE ATTACKING!!! (true = player 1, false = player 2)
 	 * @return true if attack hit an enemy's ship
 	 */
 	public boolean attack(int x, int y, boolean player)
@@ -91,19 +110,20 @@ public class ServerData
 
 		return hitShip;
 	}
-	
+
 	/**
 	 * Used to check for a newly destroyed ship
 	 * 
-	 * @param player true to check player1's ships, false to check player2's ships
+	 * @param player
+	 *            true to check player1's ships, false to check player2's ships
 	 * @return String name of newly sunk ship of player, or empty ("") if none
 	 */
 	public String checkForNewSunkShip(boolean player)
 	{
 		ArrayList<Ship> currentShips;
 		String retShip = "";
-		
-		if(player)
+
+		if (player)
 		{
 			currentShips = player1Ships;
 		}
@@ -111,20 +131,22 @@ public class ServerData
 		{
 			currentShips = player2Ships;
 		}
-		
+
 		for (Ship i : currentShips)
 		{
-			if(i.checkIfNewlySunk()) //this ship is newly sunk!
+			if (i.checkIfNewlySunk()) //this ship is newly sunk!
 			{
 				retShip = i.getName();
 				break; //no need to continue this pointless loop
 			}
 		}
-		
+
 		return retShip;
 	}
 
-	//Reset everything
+	/**
+	 * Reset every variable in this object
+	 */
 	public void reset()
 	{
 		player1Ships = new ArrayList<Ship>(); //all of player1's Ship objects
@@ -136,8 +158,10 @@ public class ServerData
 		player1ShipCount = 0;
 		player2ShipCount = 0;
 	}
-	
-	//Similar to reset(), but used when rematching a player
+
+	/**
+	 * Similar to reset(), but used when rematching a player (doesn't reset player names)
+	 */
 	public void rematch()
 	{
 		player1Ships = new ArrayList<Ship>(); //all of player1's Ship objects
@@ -148,8 +172,14 @@ public class ServerData
 		player2ShipCount = 0;
 	}
 
-	/*
+	/**
 	 * Used to figure out if a ship is considered valid (stays completely inside the board and doesn't overlap any part of any other ship) for either player
+	 * 
+	 * @param testShip
+	 *            the ship that is being tested to see if it can fit on the board
+	 * @param player
+	 *            true = player1's board, false = player2's board
+	 * @return true if it can fit, false otherwise
 	 */
 	public boolean couldShipFit(Ship testShip, boolean player)
 	{
@@ -169,13 +199,6 @@ public class ServerData
 		int backY = testShip.getBackY();
 		int frontX = testShip.getHeadX();
 		int frontY = testShip.getHeadY();
-		
-		//Determine whether the X coords are the same, or if it's the Y coords (true = X, false = Y)
-		boolean sameCoords = false;
-		if (backX == frontX)
-		{
-			sameCoords = true;
-		}
 
 		//Now make sure each coordinate is within the bounds of the board
 		if (frontX < 0 || frontX > 9 || frontY < 0 || frontY > 9 || backX < 0 || backX > 9 || backY < 0 || backY > 9)
@@ -194,7 +217,7 @@ public class ServerData
 					break; //no need to continue this pointless loop
 				}
 			}
-			
+
 			if (!canFit)//no need to continue this pointless loop
 			{
 				break;
@@ -204,7 +227,13 @@ public class ServerData
 		return canFit;
 	}
 
-	//Get name of current ship that needs to be placed for either player 1 or player 2
+	/**
+	 * Get name of current ship that needs to be placed for either player 1 or player 2
+	 * 
+	 * @param player
+	 *            true = player1's current ship, false = player2's current ship
+	 * @return the name of the player's current ship
+	 */
 	public String getCurrentShipToPlace(boolean player)
 	{
 		if (player)
@@ -216,8 +245,13 @@ public class ServerData
 			return translateShipIndex(player2ShipCount);
 		}
 	}
-	
-	//Increment the amount of ships this player has
+
+	/**
+	 * Increment the amount of ships this player has
+	 * 
+	 * @param player
+	 *            true = player1's ship count, false = player2's ship count
+	 */
 	public void incShipCount(boolean player)
 	{
 		if (player)
@@ -230,8 +264,12 @@ public class ServerData
 		}
 	}
 
-	/*
+	/**
 	 * translate a Ship index variable into a String (name of ship that needs to be placed)
+	 * 
+	 * @param testInt
+	 *            the number that corresponds to a specific ship name
+	 * @return the name of the ship specified by testInt
 	 */
 	private String translateShipIndex(int testInt)
 	{
@@ -260,8 +298,12 @@ public class ServerData
 		return curShip;
 	}
 
-	/*
-	 *  Find out how long a ship SHOULD be based off of its name
+	/**
+	 * Find out how long a ship SHOULD be based off of its name
+	 * 
+	 * @param shipName
+	 *            Name of the ship to test
+	 * @return the length of the specified ship, or -1 if name is invalid
 	 */
 	public int getShipLength(String shipName)
 	{
@@ -289,18 +331,20 @@ public class ServerData
 		}
 		return retLength;
 	}
-	
+
 	/**
 	 * Used to check if ALL of a player's ships have been sunk
-	 * @param player true for player1, false for player2
+	 * 
+	 * @param player
+	 *            true for player1, false for player2
 	 * @return true if ALL ships are sunk, false otherwise
 	 */
 	public boolean isAllSunk(boolean player)
 	{
 		ArrayList<Ship> currentShips;
 		boolean retBool = true; //start true, turn to false if any ships aren't sunk
-		
-		if(player)
+
+		if (player)
 		{
 			currentShips = player1Ships;
 		}
@@ -308,19 +352,18 @@ public class ServerData
 		{
 			currentShips = player2Ships;
 		}
-		
+
 		for (Ship i : currentShips) //go through all ships
 		{
-			if(!i.isSunk()) //if this ship isn't sunk
+			if (!i.isSunk()) //if this ship isn't sunk
 			{
 				retBool = false;
 				break; //no need to continue this pointless loop
 			}
 		}
-		
+
 		return retBool;
 	}
-	
 
 	//Getters & Setters
 
