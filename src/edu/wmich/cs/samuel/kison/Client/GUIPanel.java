@@ -101,7 +101,6 @@ public class GUIPanel
 	 */
 	protected void updatePanel(String[] updateType)
 	{
-		//System.out.println("GuiPanel: got update message: " + updateType[0]);
 		if (updateType[0].equals("notify"))
 		{
 			notificationsLabel.setText(updateType[1]);
@@ -125,7 +124,6 @@ public class GUIPanel
 	//Used to forward messages to the parent Frame from either of the GUIBoards
 	protected void receiveMessage(String[] message)
 	{
-		//System.out.println("sending message up to frame: " + message[0]);
 		switch (message[0])
 		{
 			case("button"):

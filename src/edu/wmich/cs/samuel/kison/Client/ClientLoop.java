@@ -1,5 +1,6 @@
 package edu.wmich.cs.samuel.kison.Client;
 
+import edu.wmich.cs.samuel.kison.Main;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
 public class ClientLoop implements Runnable
@@ -50,8 +51,6 @@ public class ClientLoop implements Runnable
 
 			if (deltaU >= 1)
 			{
-				//System.out.println("Client tick");
-				
 				checkInput();// check input messages from gui and server (and interpret them)
 				
 				sendOutput();
@@ -69,15 +68,18 @@ public class ClientLoop implements Runnable
 		
 		while(!this.externalClientOutput.isEmpty())
 		{
-			System.out.println("ClientLoop: External Client Output queue has something in it. Must send to server");
 			this.message = this.externalClientOutput.pop();
-			for (int i = 0; i < this.message.length; i++)
+			
+			if(Main.debug)
 			{
-				System.out.print(i+ ":" + this.message[i] + " ");
+				System.out.println("ClientLoop: External Client Output queue has something in it. Must send to server");
+				for (int i = 0; i < this.message.length; i++)
+				{
+					System.out.print(i+ ":" + this.message[i] + " ");
+				}
+				System.out.println(".");
 			}
-			System.out.println(".");
-			
-			
+
 			this.clientTCP.send(this.message); //now the external server will receive all messages
 		}
 		
@@ -113,12 +115,15 @@ public class ClientLoop implements Runnable
 	// When getting a new message from the Client, interpret what to do here
 	private void interpretClientMessage(String[] pMessage)
 	{
-		System.out.print("ClientLoop: Connected to server?: " + this.connectedToExternalServer + "\nClientLoop: New Output from Client:");
-		for (int i = 0; i < pMessage.length; i++)
+		if(Main.debug)
 		{
-			System.out.print(" " + pMessage[i]);
+			System.out.print("ClientLoop: Connected to server?: " + this.connectedToExternalServer + "\nClientLoop: New Output from Client:");
+			for (int i = 0; i < pMessage.length; i++)
+			{
+				System.out.print(" " + pMessage[i]);
+			}
+			System.out.println(".");
 		}
-		System.out.println(".");
 		
 		if(!connectedToExternalServer) //internal server
 		{
@@ -129,7 +134,7 @@ public class ClientLoop implements Runnable
 					|| pMessage[0].equals("cancel_join")
 					|| pMessage[0].equals("rematch"))
 			{
-				System.out.println("ClientLoop: Pushing message to internalClientOutput... going up to ServerLoop...");
+				if(Main.debug)System.out.println("ClientLoop: Pushing message to internalClientOutput... going up to ServerLoop...");
 				internalClientOutput.push(pMessage); //forward message to serverloop
 			}
 			else if(pMessage[0].equals("confirm_join") || pMessage[0].equals("retry_join"))
@@ -142,13 +147,13 @@ public class ClientLoop implements Runnable
 				this.clientTCP = new ClientTCP(port, hostIP, this.externalServerOutput, username);
 				if (this.clientTCP.start())
 				{
-					System.out.println("ClientLoop: Client has successfully connected!");
+					if(Main.debug)System.out.println("ClientLoop: Client has successfully connected!");
 					this.clientTCP.send(pMessage);
 					connectedToExternalServer = true; //now send messages to the external server instead
 				}
 				else
 				{
-					System.out.println("ClientLoop: Unable to connect!");
+					if(Main.debug)System.out.println("ClientLoop: Unable to connect!");
 					client.receiveMessage(new String[] {"client", "join_failed"}); //tell Client that the join failed
 				}
 			}
@@ -181,12 +186,15 @@ public class ClientLoop implements Runnable
 	// When getting a new message from the server, interpret what to do here
 	private void interpretServerMessage(String[] message)
 	{
-		System.out.print("ClientLoop: New Output from ServerLoop:");
-		for (int i = 0; i < message.length; i++)
+		if(Main.debug)
 		{
-			System.out.print(" " + message[i]);
+			System.out.print("ClientLoop: New Output from ServerLoop:");
+			for (int i = 0; i < message.length; i++)
+			{
+				System.out.print(" " + message[i]);
+			}
+			System.out.println(".");
 		}
-		System.out.println(".");
 		
 		//Message to be sent to Client (if necessary)
 		String[] connectMessage = new String[message.length + 1]; //create new message with one extra spot for client identifier
@@ -216,7 +224,7 @@ public class ClientLoop implements Runnable
 			}
 			catch(NullPointerException e)
 			{
-				System.out.println("ClientLoop: clientTCP has already been shut down");
+				if(Main.debug)System.out.println("ClientLoop: clientTCP has already been shut down");
 			}
 			
 			client.receiveMessage(connectMessage);

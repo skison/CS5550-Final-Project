@@ -1,6 +1,8 @@
 package edu.wmich.cs.samuel.kison.Client;
 
 import java.util.Arrays;
+
+import edu.wmich.cs.samuel.kison.Main;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
 /*
@@ -30,12 +32,15 @@ public class Client
 	//get message from loop, tell GUI what to do
 	public void receiveMessage(String[] message)
 	{
-		System.out.print("Client: New Output from " + message[0] + ":");
-		for (int i = 1; i < message.length; i++)
+		if(Main.debug)
 		{
-			System.out.print(" " + message[i]);
+			System.out.print("Client: New Output from " + message[0] + ":");
+			for (int i = 1; i < message.length; i++)
+			{
+				System.out.print(" " + message[i]);
+			}
+			System.out.println(".");
 		}
-		System.out.println(".");
 
 		if (message[0].equals("gui")) //message was from gui
 		{
@@ -52,8 +57,7 @@ public class Client
 					{
 						playerName = actualMessage[1];
 						gui.updateGUI(new String[] { "panel_update", "player_name", playerName });
-						//System.out.println("New player name: " + playerName);
-						//TODO: send GUI message saying player name accepted/denied (denied if blank)
+						
 						if (isPlayerNameValid())
 						{
 							gui.updateGUI(new String[] { "panel_update", "notify", "Player name accepted!" });
@@ -230,7 +234,6 @@ public class Client
 			switch (actualMessage[0])
 			{
 				case ("join_failed"):
-					System.out.println("ClientLoop Join failed in state " + state.getCurrentState());
 					gui.updateGUI(new String[] { "enable_join_bar" }); //enable the options on the join menu bar (because no longer trying to connect)
 					gui.updateGUI(new String[] { "panel_update", "notify", "Failed to join game!" });
 					break;

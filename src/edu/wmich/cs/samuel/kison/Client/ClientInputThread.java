@@ -2,6 +2,8 @@ package edu.wmich.cs.samuel.kison.Client;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+
+import edu.wmich.cs.samuel.kison.Main;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
 public class ClientInputThread extends Thread{
@@ -24,14 +26,14 @@ public class ClientInputThread extends Thread{
 			// always read in a String[] from Server to Client
 			try
 			{
-				System.out.println("ClientToServerThread: Hanging on reading String[] object...");
+				if(Main.debug)System.out.println("ClientToServerThread: Hanging on reading String[] object...");
 				String[] newMessage = (String[]) this.ois.readObject();
 				this.queue.push(newMessage);
-				System.out.println("ClientToServerThread: Successfully readObject for String[]...\nContent: " + newMessage[0]);
+				if(Main.debug)System.out.println("ClientToServerThread: Successfully readObject for String[]...\nContent: " + newMessage[0]);
 			}
 			catch(IOException e)
 			{
-				System.out.println("ClientToServerThread: Exception on reading String[] object!!!!");
+				if(Main.debug)System.out.println("ClientToServerThread: Exception on reading String[] object!!!!");
 				this.queue.push(new String[] {"client_quit"}); //let ClientLoop know that host has essentially 'quit' (disconnected)
 				break;
 			}

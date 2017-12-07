@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
+import edu.wmich.cs.samuel.kison.Main;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
 /**
@@ -49,12 +50,10 @@ public class ClientTCP
 		}
 		catch (Exception e)
 		{
-			System.out.println(
-					"ClientTCP: Exception caught at creating Socket at IP:" + this.hostIP + ", and port: " + this.port);
+			if(Main.debug)System.out.println("ClientTCP: Exception caught at creating Socket at IP:" + this.hostIP + ", and port: " + this.port);
 			return false;
 		}
-		System.out.println("ClientTCP: Connection accepted! IP from socket: " + this.socket.getInetAddress()
-				+ ", Port from socket: " + this.socket.getPort());
+		if(Main.debug)System.out.println("ClientTCP: Connection accepted! IP from socket: " + this.socket.getInetAddress() + ", Port from socket: " + this.socket.getPort());
 
 		// create Object Input/Output Streams 
 		try
@@ -64,15 +63,15 @@ public class ClientTCP
 		}
 		catch (IOException e)
 		{
-			System.out.println("ClientTCP: Exception caught while creating ObjectInputStream and ObjectOutputStream");
+			if(Main.debug)System.out.println("ClientTCP: Exception caught while creating ObjectInputStream and ObjectOutputStream");
 			return false;
 		}
-		System.out.println("ClientTCP: ois and oos have been initialized");
+		if(Main.debug)System.out.println("ClientTCP: ois and oos have been initialized");
 
 		//start thread
 		ClientInputThread c = new ClientInputThread(ois, this.serverToClientQueue);
 		c.start();
-		System.out.println("ClientTCP: ClientToServerThread started");
+		if(Main.debug)System.out.println("ClientTCP: ClientToServerThread started");
 
 		// send username to the server to confirm OOS works
 		try
@@ -81,9 +80,9 @@ public class ClientTCP
 		}
 		catch (IOException e)
 		{
-			System.out.println("ClientTCP: Exception caught while writing username to socket");
+			if(Main.debug)System.out.println("ClientTCP: Exception caught while writing username to socket");
 		}
-		System.out.println("ClientTCP: Sent username to server, all tests have passed!! returning true from start()");
+		if(Main.debug)System.out.println("ClientTCP: Sent username to server, all tests have passed!! returning true from start()");
 
 		// if all three steps were successful, then client is successfully connected, return true
 		return true;
@@ -103,7 +102,7 @@ public class ClientTCP
 		}
 		catch (IOException e)
 		{
-			System.out.println("ClientTCP: Exception caught during send(Message)");
+			if(Main.debug)System.out.println("ClientTCP: Exception caught during send(Message)");
 		}
 	}
 

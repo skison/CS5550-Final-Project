@@ -16,6 +16,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JTextField;
 
+import edu.wmich.cs.samuel.kison.ImageHolder;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
 public class GUIFrame
@@ -52,6 +53,7 @@ public class GUIFrame
 		guiPanel = new GUIPanel(this);
 
 		f = new JFrame("Battleship");
+		f.setIconImage(ImageHolder.getGameIcon()); //set the game's icon
 		f.add(guiPanel.getGui());
 
 		constructMenuBars();//Prepare the menu bars
@@ -98,7 +100,6 @@ public class GUIFrame
 	{
 		if (updateType[0].equals("start"))
 		{
-			//System.out.println("GUI updating to starting state");
 			f.setJMenuBar(startMenuBar);
 			guiPanel.reset();//Reset GUIPanel & its children
 			resetRotation();
@@ -106,41 +107,34 @@ public class GUIFrame
 		}
 		else if (updateType[0].equals("host"))
 		{
-			//System.out.println("GUI updating to allow for hosting");
 			f.setJMenuBar(hostMenuBar);
 			f.pack();
 		}
 		else if (updateType[0].equals("join"))
 		{
-			//System.out.println("GUI updating to allow for joining");
 			f.setJMenuBar(joinMenuBar);
 			f.pack();
 		}
 		else if (updateType[0].equals("host_load"))
 		{
-			//System.out.println("GUI updating to host loading state");
 			f.setJMenuBar(hostLoadingMenuBar);
 			f.pack();
 		}
 		else if (updateType[0].equals("client_load"))
 		{
-			//System.out.println("GUI updating to client loading state");
 			f.setJMenuBar(clientLoadingMenuBar);
 			f.pack();
 		}
 		else if (updateType[0].equals("disable_join_bar"))
 		{
-			//System.out.println(">>>DISABLE");
 			enableClientLoadingMenuBar(false);
 		}
 		else if (updateType[0].equals("enable_join_bar"))
 		{
-			//System.out.println(">>>ENABLE");
 			enableClientLoadingMenuBar(true);
 		}
 		else if (updateType[0].equals("setup"))
 		{
-			//System.out.println("GUI updating to setup state");
 			f.setJMenuBar(setupMenuBar);
 			guiPanel.reset();//Reset GUIPanel & its children
 			resetRotation();
@@ -413,8 +407,6 @@ public class GUIFrame
 	//Used to forward messages to Client from the child GUI objects
 	protected void receiveMessage(String[] message)
 	{
-		//System.out.println("sending message up to client");
-		
 		String[] connectMessage = new String[message.length + 1]; //create new message with one extra spot for gui identifier
 		System.arraycopy(message, 0, connectMessage, 1, message.length);
 		connectMessage[0] = "gui";
