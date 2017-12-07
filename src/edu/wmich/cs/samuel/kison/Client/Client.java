@@ -5,22 +5,34 @@ import java.util.Arrays;
 import edu.wmich.cs.samuel.kison.Main;
 import edu.wmich.cs.samuel.kison.MessageQueue;
 
-/*
- * Client controller class in charge of both the GUI & client loop
+/**
+ * Client controller class in charge of both the GUI & ClientLoop. It can be considered to be the main 'C' in the MVC structure for the client. The Server is in
+ * charge of holding most of the game data (Model) for this program, but there are a few Client-side bits that this class is in control of, such as both player
+ * names and the current client game state (see ClientState class)
+ * 
+ * @author Samuel Kison
+ *
  */
 public class Client
 {
-	//hold Loop & GUI for the Client
-	private ClientLoop loop;
-	private GUIFrame gui;
-	private MessageQueue clientQueue;
-	private Thread loopThread;
+	private ClientLoop loop; //hold Loop & GUI for the Client
+	private GUIFrame gui; //^
+	private MessageQueue clientQueue; //queue used to push messages to the ClientLoop for it to interpret
+	private Thread loopThread; //thread to run ClientLoop
 	private ClientState state = new ClientState(); //hold the current state of the client
 
 	private String playerName = ""; //custom player name
 	private String enemyName = ""; //custom name for player2
 
-	public Client(MessageQueue clientOutput, MessageQueue serverOutput) //clientOutput & serverOutput are used in the ClientLoop
+	/**
+	 * Initialize the Client object- creates a new ClientLoop and GUI
+	 * 
+	 * @param clientOutput
+	 *            MessageQueue used by ClientLoop to push messages to the internal server if also hosting
+	 * @param serverOutput
+	 *            MessageQueue used by ClientLoop to pop messages from the internal server if also hosting
+	 */
+	public Client(MessageQueue clientOutput, MessageQueue serverOutput)
 	{
 		clientQueue = new MessageQueue();
 		gui = new GUIFrame(this/*, clientQueue*/);
@@ -29,10 +41,18 @@ public class Client
 		loopThread.start();//start loop
 	}
 
-	//get message from loop, tell GUI what to do
+	/**
+	 * Used to receive a message from the GUI or ClientLoop, which will then be interpreted, usually resulting in a change to the GUI or a new message to the
+	 * ClientLoop to send to the server. <br>
+	 * NOTE- GUI notification messages are currently hard-coded in the logic below
+	 * 
+	 * @param message
+	 *            the full String[] message; should start either with "gui" to specify that it came from the GUI, or "client" to specify that it came from the
+	 *            ClientLoop. This first value is discarded when forwarding the message to the GUI or ClientLoop
+	 */
 	public void receiveMessage(String[] message)
 	{
-		if(Main.debug)
+		if (Main.debug)
 		{
 			System.out.print("Client: New Output from " + message[0] + ":");
 			for (int i = 1; i < message.length; i++)
@@ -51,13 +71,13 @@ public class Client
 				case ("exit"):
 					clientQueue.push(actualMessage); //let clientloop know that it is time to exit
 					break;
-					
+
 				case ("confirm_name"):
 					if (state.getCurrentState().equals("Start")) //only confirm name if in Start state
 					{
 						playerName = actualMessage[1];
 						gui.updateGUI(new String[] { "panel_update", "player_name", playerName });
-						
+
 						if (isPlayerNameValid())
 						{
 							gui.updateGUI(new String[] { "panel_update", "notify", "Player name accepted!" });
@@ -68,7 +88,7 @@ public class Client
 						}
 					}
 					break;
-					
+
 				case ("join"):
 					if (state.getCurrentState().equals("Start")) //only join game if in Start state
 					{
@@ -85,7 +105,7 @@ public class Client
 						}
 					}
 					break;
-					
+
 				case ("host"):
 					if (state.getCurrentState().equals("Start")) //only host game if in Start state
 					{
@@ -102,7 +122,7 @@ public class Client
 						}
 					}
 					break;
-					
+
 				case ("cancel_join"):
 					if (state.getCurrentState().equals("Join_Game_Preparation")) //can only cancel joining game if in this state
 					{
@@ -111,7 +131,7 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Please host or join a game!" });
 					}
 					break;
-					
+
 				case ("cancel_host"):
 					if (state.getCurrentState().equals("Host_Game_Preparation")) //can only cancel hosting game if in this state
 					{
@@ -120,7 +140,7 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Please host or join a game!" });
 					}
 					break;
-					
+
 				case ("confirm_join"):
 					if (state.getCurrentState().equals("Join_Game_Preparation")) //can only join game if in this state
 					{
@@ -145,7 +165,7 @@ public class Client
 						}
 					}
 					break;
-					
+
 				case ("retry_join"):
 					if (state.getCurrentState().equals("Loading_Game")) //can only retry loading if in loading state
 					{
@@ -157,7 +177,7 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Attempting to join game..." });
 					}
 					break;
-					
+
 				case ("confirm_host"):
 					if (state.getCurrentState().equals("Host_Game_Preparation")) //can only host game if in this state
 					{
@@ -177,7 +197,7 @@ public class Client
 						}
 					}
 					break;
-					
+
 				case ("cancel_load"):
 					if (state.getCurrentState().equals("Loading_Game")) //can only quit loading if in loading state
 					{
@@ -187,7 +207,7 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Please host or join a game!" });
 					}
 					break;
-					
+
 				case ("button"):
 					if (state.getCurrentState().equals("Setup_Game")) //User is placing ships during setup
 					{
@@ -196,7 +216,7 @@ public class Client
 							clientQueue.push(actualMessage); //tell clientLoop where the ship is trying to be placed
 						}
 					}
-					else if(state.getCurrentState().equals("Playing_Game")) //user it attacking enemy
+					else if (state.getCurrentState().equals("Playing_Game")) //user it attacking enemy
 					{
 						if (actualMessage[1].equals("false"))//you have to attack enemy's ships only
 						{
@@ -204,9 +224,10 @@ public class Client
 						}
 					}
 					break;
-					
+
 				case ("quit"):
-					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game") || state.getCurrentState().equals("End_Game")) //need to be in-game to quit it
+					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game")
+							|| state.getCurrentState().equals("End_Game")) //need to be in-game to quit it
 					{
 						state.setCurrentState("Start");
 						gui.updateGUI(new String[] { "start" });
@@ -214,7 +235,7 @@ public class Client
 						clientQueue.push(actualMessage); //tell clientLoop to quit game
 					}
 					break;
-					
+
 				case ("rematch"):
 					if (state.getCurrentState().equals("End_Game")) //need to be in end-game to request a rematch!
 					{
@@ -222,7 +243,7 @@ public class Client
 						clientQueue.push(actualMessage); //tell clientLoop to try to rematch enemy
 					}
 					break;
-					
+
 				default:
 					break;
 			}
@@ -237,7 +258,7 @@ public class Client
 					gui.updateGUI(new String[] { "enable_join_bar" }); //enable the options on the join menu bar (because no longer trying to connect)
 					gui.updateGUI(new String[] { "panel_update", "notify", "Failed to join game!" });
 					break;
-					
+
 				case ("enemy_connected"):
 					if (state.getCurrentState().equals("Loading_Game"))//can only connect with enemy if in Loading_Game state
 					{
@@ -248,22 +269,23 @@ public class Client
 						gui.updateGUI(new String[] { "panel_update", "notify", "Place your ships!" });
 					}
 					break;
-					
+
 				case ("valid_placement"):
 					if (state.getCurrentState().equals("Setup_Game")) //can only setup ships during setup period
 					{
-						gui.getPanel().getBoard(true).placeShip(actualMessage[1], Integer.parseInt(actualMessage[3]),
-								Integer.parseInt(actualMessage[4]), actualMessage[2]);
+						gui.updateGUI(new String[] { "panel_update", "place_ship", actualMessage[1], actualMessage[3],
+								actualMessage[4], actualMessage[2] });
 					}
 					break;
-					
+
 				case ("your_ships_placed"):
 					if (state.getCurrentState().equals("Setup_Game")) //must be during setup period
 					{
-						gui.updateGUI(new String[] { "panel_update", "notify", "Waiting for enemy to finish placing ships..." }); //let player know that server is waiting for other player
+						gui.updateGUI(new String[] { "panel_update", "notify",
+								"Waiting for enemy to finish placing ships..." }); //let player know that server is waiting for other player
 					}
 					break;
-					
+
 				case ("all_ships_placed"):
 					if (state.getCurrentState().equals("Setup_Game")) //must be during setup period
 					{
@@ -278,102 +300,120 @@ public class Client
 						}
 					}
 					break;
-					
+
 				case ("player_hit_success"):
-					if(state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
+					if (state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
 					{
 						if (actualMessage[1].equals("true")) //player hit the enemy!
 						{
-							gui.updateGUI(new String[] { "panel_update", "notify", "You hit " + enemyName + "'s ship! Waiting for " + enemyName + " to take their turn..." });
-							gui.getPanel().getBoard(false).attackLocation(Integer.parseInt(actualMessage[2]), Integer.parseInt(actualMessage[3]), true);
+							gui.updateGUI(new String[] { "panel_update", "notify", "You hit " + enemyName
+									+ "'s ship! Waiting for " + enemyName + " to take their turn..." });
+							gui.updateGUI(new String[] { "panel_update", "attack", "false", actualMessage[2],
+									actualMessage[3], "true" });
 						}
 						else //player got hit by the enemy!
 						{
-							gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " hit your ship, now make your move!" });
-							gui.getPanel().getBoard(true).attackLocation(Integer.parseInt(actualMessage[2]), Integer.parseInt(actualMessage[3]), true);
+							gui.updateGUI(new String[] { "panel_update", "notify",
+									enemyName + " hit your ship, now make your move!" });
+							gui.updateGUI(new String[] { "panel_update", "attack", "true", actualMessage[2],
+									actualMessage[3], "true" });
 						}
 					}
 					break;
-					
+
 				case ("player_hit_failure"):
-					if(state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
+					if (state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
 					{
 						if (actualMessage[1].equals("true")) //player missed the enemy!
 						{
-							gui.updateGUI(new String[] { "panel_update", "notify", "You missed! Waiting for " + enemyName + " to take their turn..." });
-							gui.getPanel().getBoard(false).attackLocation(Integer.parseInt(actualMessage[2]), Integer.parseInt(actualMessage[3]), false);
+							gui.updateGUI(new String[] { "panel_update", "notify",
+									"You missed! Waiting for " + enemyName + " to take their turn..." });
+							gui.updateGUI(new String[] { "panel_update", "attack", "false", actualMessage[2],
+									actualMessage[3], "false" });
 						}
 						else //enemy missed the player!
 						{
-							gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " missed, now make your move!" });
-							gui.getPanel().getBoard(true).attackLocation(Integer.parseInt(actualMessage[2]), Integer.parseInt(actualMessage[3]), false);
+							gui.updateGUI(new String[] { "panel_update", "notify",
+									enemyName + " missed, now make your move!" });
+							gui.updateGUI(new String[] { "panel_update", "attack", "true", actualMessage[2],
+									actualMessage[3], "false" });
 						}
 					}
 					break;
-					
+
 				case ("player_ship_sunk"):
-					if(state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
+					if (state.getCurrentState().equals("Playing_Game")) //must be playing game to attack ship
 					{
 						if (actualMessage[1].equals("true")) //player hit the enemy!
 						{
-							gui.updateGUI(new String[] { "panel_update", "notify", "You sunk " + enemyName + "'s " + actualMessage[2] + "! Waiting for " + enemyName + " to take their turn..." });
+							gui.updateGUI(new String[] { "panel_update", "notify", "You sunk " + enemyName + "'s "
+									+ actualMessage[2] + "! Waiting for " + enemyName + " to take their turn..." });
 						}
 						else //player got hit by the enemy!
 						{
-							gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " sunk your " + actualMessage[2] + ", now make your move!" });
+							gui.updateGUI(new String[] { "panel_update", "notify",
+									enemyName + " sunk your " + actualMessage[2] + ", now make your move!" });
 						}
 					}
 					break;
-					
-				case("game_over"):
-					if(state.getCurrentState().equals("Playing_Game")) //must be playing game to finish it
+
+				case ("game_over"):
+					if (state.getCurrentState().equals("Playing_Game")) //must be playing game to finish it
 					{
 						state.setCurrentState("End_Game"); //set to end state
 						gui.updateGUI(new String[] { "end" }); //update GUI's menu bar
-						
+
 						if (actualMessage[1].equals("true")) //player won!
 						{
-							gui.updateGUI(new String[] { "panel_update", "notify", "You defeated " + enemyName + "! Click the rematch button to play against them again, or quit the game!" });
+							gui.updateGUI(new String[] { "panel_update", "notify", "You defeated " + enemyName
+									+ "! Click the rematch button to play against them again, or quit the game!" });
 						}
 						else //enemy won
 						{
-							gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " defeated you! Click the rematch button to play against them again, or quit the game!" });
+							gui.updateGUI(new String[] { "panel_update", "notify", enemyName
+									+ " defeated you! Click the rematch button to play against them again, or quit the game!" });
 						}
 					}
 					break;
-					
-				case("client_quit"):
-					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game") || state.getCurrentState().equals("End_Game")) //must be during the game
+
+				case ("client_quit"):
+					if (state.getCurrentState().equals("Setup_Game") || state.getCurrentState().equals("Playing_Game")
+							|| state.getCurrentState().equals("End_Game")) //must be during the game
 					{
 						state.setCurrentState("Start"); //set state back to start
 						gui.updateGUI(new String[] { "start" }); //change gui's menubar to start bar
 						gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " has quit the game!" });
 					}
 					break;
-					
-				case("request_rematch"):
-					if(state.getCurrentState().equals("End_Game"))
+
+				case ("request_rematch"):
+					if (state.getCurrentState().equals("End_Game")) //can only request rematch if in end game state
 					{
-						gui.updateGUI(new String[] { "panel_update", "notify", enemyName + " is requesting a rematch! Click 'Rematch' to accept!" });
+						gui.updateGUI(new String[] { "panel_update", "notify",
+								enemyName + " is requesting a rematch! Click 'Rematch' to accept!" });
 					}
 					break;
-					
-				case("rematch_accepted"):
-					if(state.getCurrentState().equals("End_Game")) //start a new game if in end game state
+
+				case ("rematch_accepted"):
+					if (state.getCurrentState().equals("End_Game")) //start a new game if in end game state
 					{
 						state.setCurrentState("Setup_Game");
 						gui.updateGUI(new String[] { "setup" });
 						gui.updateGUI(new String[] { "panel_update", "notify", "Place your ships!" });
 					}
 					break;
-					
+
 				default:
 					break;
 			}
 		}
 	}
 
-	//Check if player name is ok to use!
+	/**
+	 * Used to validate a player name (for now, just make sure it isn't blank)
+	 * 
+	 * @return true if valid name, false if invalid
+	 */
 	private boolean isPlayerNameValid()
 	{
 		boolean retBool = true;
@@ -384,7 +424,13 @@ public class Client
 		return retBool;
 	}
 
-	//Check if a given port number is ok to TRY to use
+	/**
+	 * Check if a given port number is ok to TRY to use (integer that is > 0)
+	 * 
+	 * @param portNum
+	 *            the String representation of the port number to try
+	 * @return true if port number is ok to try, false otherwise
+	 */
 	private boolean isPortValid(String portNum)
 	{
 		boolean retBool = true;
@@ -403,7 +449,13 @@ public class Client
 		return retBool;
 	}
 
-	//Check if a given IP address is ok to TRY to use
+	/**
+	 * Check if a given IP address is ok to TRY to use (non-empty for now, no serious type checking)
+	 * 
+	 * @param ip
+	 *            the String representation of the IP to try
+	 * @return true if IP is ok to try, false otherwise
+	 */
 	private boolean isIPValid(String ip)
 	{
 		boolean retBool = true;

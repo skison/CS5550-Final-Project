@@ -2,10 +2,7 @@ package edu.wmich.cs.samuel.kison.Client;
 
 import edu.wmich.cs.samuel.kison.StateList;
 
-/*
- * This class is used to keep track of the current 'state' the Client is in. This is necessary to make sure
- * that certain actions only take place when they are meant to. (like starting/joining a server)
- * 
+/* 
  * Simplified diagram of Client states:
  * 
  * Start <-------------> Join_Game_Preparation
@@ -24,12 +21,19 @@ import edu.wmich.cs.samuel.kison.StateList;
  *                             End_Game ---> Back to Setup_Game if chose 'rematch', otherwise back to Start
  */
 
+/**
+ * This class is used to keep track of the current 'state' the Client is in. This is necessary to make sure that certain actions only take place when they are
+ * meant to. (like starting/joining a server)
+ * 
+ * @author Samuel Kison
+ *
+ */
 public class ClientState extends StateList
 {
 	public ClientState()
 	{
 		super();//call StateList constructor
-		
+
 		//Set up Nodes as shown above
 		stateList.add("Start");
 		stateList.add("Join_Game_Preparation");

@@ -3,16 +3,12 @@ package edu.wmich.cs.samuel.kison.Client;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,29 +20,61 @@ import javax.swing.border.LineBorder;
 
 import edu.wmich.cs.samuel.kison.ImageHolder;
 import edu.wmich.cs.samuel.kison.Main;
-import edu.wmich.cs.samuel.kison.MessageQueue;
 
+/**
+ * This is the lowest-level GUI structure for the Client. Two of these are created by a GUIPanel object, which can receive messages from this board, and also
+ * make modifications to it if it received the appropriate message to do so from its parent GUIFrame.
+ * 
+ * <br>
+ * <br>
+ * Code reference (chess game): https://stackoverflow.com/questions/21142686/making-a-robust-resizable-swing-chess-gui
+ * 
+ * @author Samuel Kison
+ *
+ */
 public class GUIBoard implements ActionListener
 {
-	private JButton[][] gameBoardSquares = new JButton[10][10];
-	private JPanel gameBoard;
-	private static final String COLS = "ABCDEFGHIJ";
-	boolean player; //true = you, false = enemy
+	private JButton[][] gameBoardSquares = new JButton[10][10]; //the grid of squares on the board
+	private JPanel gameBoard; //the board itself
+	private static final String COLS = "ABCDEFGHIJ"; //letters in the side column
+	boolean player; //true = player, false = enemy
 	Color yourColor = new Color(56, 201, 255); //background colors
-	Color enemyColor = new Color(255, 90, 68);
+	Color enemyColor = new Color(255, 90, 68); //^
 	private GUIPanel panel; //parent Panel, used to send messages up a level
 
+	/**
+	 * Initialize this board
+	 * 
+	 * @param _player
+	 *            true = player1(you), false = player2 (enemy)
+	 * @param newPanel
+	 *            the parent GUIPanel (so this board can send messages up to it)
+	 */
 	public GUIBoard(boolean _player, GUIPanel newPanel)
 	{
 		panel = newPanel;
 		player = _player;
-		
-		gameBoard = new JPanel(new GridLayout(0, 11)) {};
+
+		gameBoard = new JPanel(new GridLayout(0, 11)) //create the JPanel that holds the board
+		{
+
+			/**
+			 * default serial UID
+			 */
+			private static final long serialVersionUID = 1L;
+		};
 		gameBoard.setBorder(new CompoundBorder(new EmptyBorder(8, 8, 8, 8), new LineBorder(Color.BLACK)));
+
 		// Set the BG color
-		if(player) {gameBoard.setBackground(yourColor);}
-		else {gameBoard.setBackground(enemyColor);}
-		
+		if (player)
+		{
+			gameBoard.setBackground(yourColor);
+		}
+		else
+		{
+			gameBoard.setBackground(enemyColor);
+		}
+
 		// create the board squares
 		Insets buttonMargin = new Insets(0, 0, 0, 0);
 		Border buttonBorder = BorderFactory.createDashedBorder(Color.BLACK);
@@ -59,47 +87,46 @@ public class GUIBoard implements ActionListener
 				b.setBorder(buttonBorder);
 				b.setBackground(Color.BLUE);
 				b.setPreferredSize(new Dimension(Main.squareSize, Main.squareSize));
-				
-				b.setIcon(ImageHolder.defaultScaleIcon(ImageHolder.getWaterTile()));
-				b.setRolloverIcon(ImageHolder.defaultScaleIcon(ImageHolder.getHitMarker(false)));
-				
+
+				b.setIcon(ImageHolder.defaultScaleIcon(ImageHolder.getWaterTile())); //give a water tile to every button to start
+				b.setRolloverIcon(ImageHolder.defaultScaleIcon(ImageHolder.getHitMarker(false))); //set a rollover icon of a hitmarker to tell which button you will click
+
 				//keep track of x & y position
 				b.putClientProperty("x", jj);
 				b.putClientProperty("y", ii);
-				
+
 				//add action listener for this button
 				b.addActionListener(this);
-				
+
 				gameBoardSquares[jj][ii] = b;
 			}
 		}
-		
-		/*
-		 * fill the board
-		 */
-		gameBoard.add(new JLabel(""));
-		// fill the top row
-		for (int ii = 0; ii < gameBoardSquares.length; ii++)
+
+		//fill the board
+		gameBoard.add(new JLabel("")); //empty square in the top-left corner
+		for (int ii = 0; ii < gameBoardSquares.length; ii++)// fill the top row
 		{
 			gameBoard.add(new JLabel(COLS.substring(ii, ii + 1), SwingConstants.CENTER));
 		}
-		// fill the black non-pawn piece row
-		for (int ii = 0; ii < gameBoardSquares.length; ii++)
+		for (int ii = 0; ii < gameBoardSquares.length; ii++)// fill everything else (loop through rows)
 		{
-			for (int jj = 0; jj < gameBoardSquares.length; jj++)
+			for (int jj = 0; jj < gameBoardSquares.length; jj++) //loop through cols
 			{
-				switch (jj)
+				switch (jj) //decide if this is a leftmost column, in which case, add a number
 				{
 					case 0: //add left-hand numbers
 						gameBoard.add(new JLabel("" + ((ii + 1)), SwingConstants.CENTER));
-					default:
+					default: //add the tile (and YES, if case=0, both the number tile AND this should be added, which is why there is no break above!)
 						gameBoard.add(gameBoardSquares[jj][ii]);
+						break;
 				}
 			}
 		}
 	}
-	
-	//Reset the icons on this board
+
+	/**
+	 * Reset the icons on this board
+	 */
 	public void reset()
 	{
 		for (int ii = 0; ii < gameBoardSquares.length; ii++)
@@ -110,54 +137,60 @@ public class GUIBoard implements ActionListener
 			}
 		}
 	}
-	
-	public JPanel getBoard()
+
+	/**
+	 * Used by GUIPanel ONLY to retrieve this board
+	 * 
+	 * @return
+	 */
+	protected JPanel getBoard()
 	{
 		return gameBoard;
 	}
-	
-	//Methods for placing new ships & markers
-	
-	/*
-	 * ship = name of ship
-	 * x = x coordinate
-	 * y = y coordinate
-	 * NOTE: x & y coordinates determine where the FRONT of the ship is placed
-	 * rotation = direction the ship should face (up, down, left, right)
+
+	/**
+	 * This method places ship images on the board depending on the ship name, coordinates, and rotation specified
 	 * 
-	 * NOTE: no error checking is performed here, that is the job of the server!
+	 * @param ship
+	 *            Name of the current ship to place
+	 * @param x
+	 *            X coordinate of the ship's head on the board
+	 * @param y
+	 *            Y coordinate of the ship's head on the board
+	 * @param rotation
+	 *            Direction the ship is facing (Up, Down, Left, or Right)
 	 */
 	public void placeShip(String ship, int x, int y, String rotation)
 	{
 		BufferedImage[] shipParts = null; //start null
-		
-		switch(ship)
+
+		switch (ship) //fill in the shipParts array with images depending on name and rotation
 		{
-			case("Destroyer"):
+			case ("Destroyer"):
 				shipParts = new BufferedImage[2];
 				shipParts[0] = ImageHolder.rotateImage(ImageHolder.getDestroyer(1), rotation);
 				shipParts[1] = ImageHolder.rotateImage(ImageHolder.getDestroyer(2), rotation);
 				break;
-			case("Submarine"):
+			case ("Submarine"):
 				shipParts = new BufferedImage[3];
 				shipParts[0] = ImageHolder.rotateImage(ImageHolder.getSubmarine(1), rotation);
 				shipParts[1] = ImageHolder.rotateImage(ImageHolder.getSubmarine(2), rotation);
 				shipParts[2] = ImageHolder.rotateImage(ImageHolder.getSubmarine(3), rotation);
 				break;
-			case("Cruiser"):
+			case ("Cruiser"):
 				shipParts = new BufferedImage[3];
 				shipParts[0] = ImageHolder.rotateImage(ImageHolder.getCruiser(1), rotation);
 				shipParts[1] = ImageHolder.rotateImage(ImageHolder.getCruiser(2), rotation);
 				shipParts[2] = ImageHolder.rotateImage(ImageHolder.getCruiser(3), rotation);
 				break;
-			case("Battleship"):
+			case ("Battleship"):
 				shipParts = new BufferedImage[4];
 				shipParts[0] = ImageHolder.rotateImage(ImageHolder.getBattleship(1), rotation);
 				shipParts[1] = ImageHolder.rotateImage(ImageHolder.getBattleship(2), rotation);
 				shipParts[2] = ImageHolder.rotateImage(ImageHolder.getBattleship(3), rotation);
 				shipParts[3] = ImageHolder.rotateImage(ImageHolder.getBattleship(4), rotation);
 				break;
-			case("Carrier"):
+			case ("Carrier"):
 				shipParts = new BufferedImage[5];
 				shipParts[0] = ImageHolder.rotateImage(ImageHolder.getCarrier(1), rotation);
 				shipParts[1] = ImageHolder.rotateImage(ImageHolder.getCarrier(2), rotation);
@@ -168,25 +201,25 @@ public class GUIBoard implements ActionListener
 			default:
 				break;
 		}
-		
+
 		//now change the required JButton icons
-		for(int i = 0; i < shipParts.length; i++)
+		for (int i = 0; i < shipParts.length; i++)
 		{
-			gameBoardSquares[x][y].setIcon(ImageHolder.defaultScaleIcon(shipParts[i]));
-			
+			gameBoardSquares[x][y].setIcon(ImageHolder.defaultScaleIcon(shipParts[i])); //set icon of current button at x/y coords
+
 			//increment or decrement x or y depending on the rotation
-			switch(rotation)
+			switch (rotation)
 			{
-				case("Up"):
+				case ("Up"):
 					y++;
 					break;
-				case("Down"):
+				case ("Down"):
 					y--;
 					break;
-				case("Left"):
+				case ("Left"):
 					x++;
 					break;
-				case("Right"):
+				case ("Right"):
 					x--;
 					break;
 				default:
@@ -194,12 +227,16 @@ public class GUIBoard implements ActionListener
 			}
 		}
 	}
-	
+
 	/**
 	 * Used to set the image of a button to either the 'HitMarkerFail' or 'HitMarkerSuccess' at a specific location
-	 * @param x X coordinate of attack
-	 * @param y Y coordinate of attack
-	 * @param hit true if attack was successful, false if it failed
+	 * 
+	 * @param x
+	 *            X coordinate of attack
+	 * @param y
+	 *            Y coordinate of attack
+	 * @param hit
+	 *            true if attack was successful, false if it failed
 	 */
 	public void attackLocation(int x, int y, boolean hit)
 	{
@@ -212,7 +249,8 @@ public class GUIBoard implements ActionListener
 		JButton btn = (JButton) e.getSource();
 		int x = (int) btn.getClientProperty("x");
 		int y = (int) btn.getClientProperty("y");
-		panel.receiveMessage(new String[]{"button", String.valueOf(player), Integer.toString(x), Integer.toString(y)});
+		panel.receiveMessage(
+				new String[] { "button", String.valueOf(player), Integer.toString(x), Integer.toString(y) });
 	}
 
 }
