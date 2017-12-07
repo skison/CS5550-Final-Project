@@ -1,27 +1,35 @@
 package edu.wmich.cs.samuel.kison;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JTextField;
-
 import edu.wmich.cs.samuel.kison.Client.Client;
-import edu.wmich.cs.samuel.kison.Client.GUIPanel;
-import edu.wmich.cs.samuel.kison.Server.Server;
 import edu.wmich.cs.samuel.kison.Server.ServerLoop;
 
 /*Start the main loop*/
 
 public class Main
 {
+	public static boolean debug = false; //boolean that determines if print statements should happen
+	public static int squareSize = 64; //resolution of every square/tile in the game; pass in the arg squareSize=x to change the resolution (good for small screens)
+	
 	public static void main(String[] args)
 	{
+		if(args.length > 0)
+		{
+			System.out.println("Input on startup: ");
+			for(int i = 0; i < args.length; i++)
+			{
+				System.out.println("> " + args[i]);
+				if(args[i].equalsIgnoreCase("debug"))
+				{
+					debug = true;
+				}
+				else if(args[i].startsWith("squareSize"))
+				{
+					String sizeString = args[i].substring(11);
+					System.out.println("New squareSize: " + sizeString);
+					squareSize = Integer.parseInt(sizeString);
+				}
+			}
+		}
 		//Load up the images for use within GUIs
 		ImageHolder.loadImages();
 		
@@ -31,7 +39,9 @@ public class Main
 		
 		//Create client & server
 		Client client = new Client(clientOutput, serverOutput);
-		Server server = new Server(clientOutput, serverOutput);
 
+		ServerLoop gameLoop = new ServerLoop(clientOutput, serverOutput);
+		Thread gameLoopThread = new Thread(gameLoop);
+		gameLoopThread.start();
 	}
 }
